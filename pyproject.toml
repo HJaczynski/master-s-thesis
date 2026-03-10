@@ -1,0 +1,46 @@
+[project]
+name = "cv-model-benchmark"
+version = "0.1.0"
+description = "Computer Vision Model Benchmarking Tool - Test and optimize CV models with various optimization methods"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["computer-vision", "benchmarking", "optimization", "deep-learning", "pytorch"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "pandas>=1.5.0",
+    "seaborn>=0.12.0",
+    "matplotlib>=3.5.0",
+    "numpy>=1.21.0",
+    "psutil>=5.9.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "jupyter>=1.0.0",
+]
+
+[project.scripts]
+cv-benchmark = "main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
