@@ -1,0 +1,75 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\title{Ideas}
+\author{Hubert Jaczyński}
+\date{3rd February 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Architectures}
+
+\subsection{RT-DETR}
+
+RT-DETR (Real-Time Detection Transformer) is a transformer-based object detector designed for real-time performance. 
+Unlike traditional YOLO-style detectors, it removes the need for Non-Maximum Suppression (NMS) using set-based matching loss, similar to DETR \cite{carion2020end}. 
+RT-DETR variants incorporate efficient backbones and query mechanisms to balance speed and accuracy.
+
+Key characteristics:
+\begin{itemize}
+    \item End-to-end detection without NMS \cite{carion2020end}
+    \item Transformer-based object queries
+    \item Designed for real-time GPU deployment
+    \item Competitive accuracy–latency trade-off
+\end{itemize}
+
+\textbf{papers:}
+\begin{itemize}
+    \item CARION et al., \emph{End-to-End Object Detection with Transformers (DETR)}, ECCV 2020: \url{https://arxiv.org/abs/2005.12872}
+    \item Liu et al., \emph{RT-DETR: Real-Time Detection Transformer}, CVPR 2023: \url{https://arxiv.org/abs/2304.05049}
+\end{itemize}
+
+\subsection{YOLO v26 (latest generation)}
+
+YOLO v26 represents the newest generation of the YOLO (You Only Look Once) family of one-stage object detectors. 
+It follows the single-shot detection paradigm, predicting bounding boxes and class probabilities in a single forward pass \cite{redmon2016you}.
+Recent YOLO versions improve backbone efficiency and feature fusion for better real-time performance.
+
+\textbf{papers:}
+\begin{itemize}
+    \item Wong et al., \emph{YOLO-NAS: Neural Architecture Search for YOLO}, 2023: \url{https://arxiv.org/abs/2302.00926}
+    \item (YOLOv26 Ultralytics): \url{https://arxiv.org/html/2509.25164v1}
+\end{itemize}
+
+\subsection{RF-DETR NAS}
+https://openreview.net/forum?id=qHm5GePxTh
+
+\subsection{Optimisations}
+
+To make architectures suitable for edge deployment, several optimisation techniques can be applied:
+
+\begin{itemize}
+    \item \textbf{Quantisation:} Reducing numerical precision (e.g., FP32 to INT8) to decrease memory usage and improve inference speed 
+    \item \textbf{Structured pruning:} Removing entire channels or layers to reduce computational cost while preserving hardware efficiency \cite{li2016pruning}.
+    \item \textbf{Knowledge distillation:} Training a smaller student model to mimic a larger teacher model 
+    \item \textbf{Mixed precision inference:} Using different numerical precision levels across layers to balance speed and accuracy \cite{micikevicius2017mixed}.
+    \item \textbf{Hardware-aware optimisation:} Adapting model design to specific accelerators (e.g., NPUs, GPUs) and runtime compilers 
+    \item \textbf{Early exiting / dynamic inference:} Allowing models to stop computation early for simple inputs, reducing latency 
+\end{itemize}
+
+\textbf{papers:}
+\begin{itemize}
+    \item Jia et al., \emph{Adaptive Distribution-aware Mixed-Precision Quantization}, 2025: \url{https://arxiv.org/abs/2510.19760}
+    \item Zniber et al., \emph{Hardware-aware NAS of Early Exiting Networks}, 2025: \url{https://arxiv.org/abs/2512.04705}
+    \item Wu et al., \emph{Energy-Efficient DNN Inference on Edge Devices}, MLSys 2023: \url{https://arxiv.org/abs/2303.12391}
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

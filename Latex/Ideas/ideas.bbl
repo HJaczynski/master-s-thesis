@@ -1,0 +1,23 @@
+\begin{thebibliography}{1}
+
+\bibitem{carion2020end}
+Nicolas Carion et~al.
+\newblock End-to-end object detection with transformers.
+\newblock {\em ECCV}, 2020.
+
+\bibitem{li2016pruning}
+Hao Li et~al.
+\newblock Pruning filters for efficient convnets.
+\newblock {\em ICLR}, 2017.
+
+\bibitem{micikevicius2017mixed}
+Paulius Micikevicius et~al.
+\newblock Mixed precision training.
+\newblock {\em ICLR}, 2018.
+
+\bibitem{redmon2016you}
+Joseph Redmon et~al.
+\newblock You only look once: Unified, real-time object detection.
+\newblock {\em CVPR}, 2016.
+
+\end{thebibliography}

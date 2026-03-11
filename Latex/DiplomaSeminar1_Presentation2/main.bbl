@@ -1,0 +1,394 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global}
+  \entry{Abid2022EdgeDevices}{incollection}{}
+    \name{author}{5}{}{%
+      {{hash=AA}{%
+         family={Abid},
+         familyi={A\bibinitperiod},
+         given={Areeba},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=SP}{%
+         family={Sinha},
+         familyi={S\bibinitperiod},
+         given={Priyanshu},
+         giveni={P\bibinitperiod},
+      }}%
+      {{hash=HA}{%
+         family={Harpale},
+         familyi={H\bibinitperiod},
+         given={Aishwarya},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=GJ}{%
+         family={Gichoya},
+         familyi={G\bibinitperiod},
+         given={Judy},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=PS}{%
+         family={Purkayastha},
+         familyi={P\bibinitperiod},
+         given={Saptarshi},
+         giveni={S\bibinitperiod},
+      }}%
+    }
+    \name{editor}{4}{}{%
+      {{hash=MK}{%
+         family={Matsui},
+         familyi={M\bibinitperiod},
+         given={Kenji},
+         giveni={K\bibinitperiod},
+      }}%
+      {{hash=OS}{%
+         family={Omatu},
+         familyi={O\bibinitperiod},
+         given={Sigeru},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=YT}{%
+         family={Yigitcanlar},
+         familyi={Y\bibinitperiod},
+         given={Tan},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=GSR}{%
+         family={Gonz{\'a}lez},
+         familyi={G\bibinitperiod},
+         given={Sara\bibnamedelima Rodr{\'\i}guez},
+         giveni={S\bibinitperiod\bibinitdelim R\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Springer}%
+    }
+    \strng{namehash}{AA+1}
+    \strng{fullhash}{AASPHAGJPS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{Distributed Computing and Artificial Intelligence, Volume 1: 18th International Conference}
+    \verb{doi}
+    \verb 10.1007/978-3-030-86261-9_8
+    \endverb
+    \field{pages}{77\bibrangedash 87}
+    \field{series}{Lecture Notes in Networks and Systems}
+    \field{title}{Optimizing Medical Image Classification Models for Edge Devices}
+    \verb{url}
+    \verb https://link.springer.com/chapter/10.1007/978-3-030-86261-9_8
+    \endverb
+    \field{volume}{327}
+    \list{location}{1}{%
+      {Cham}%
+    }
+    \field{year}{2022}
+  \endentry
+
+  \entry{sze2017efficient}{article}{}
+    \name{author}{4}{}{%
+      {{hash=SV}{%
+         family={Sze},
+         familyi={S\bibinitperiod},
+         given={Vivienne},
+         giveni={V\bibinitperiod},
+      }}%
+      {{hash=CYH}{%
+         family={Chen},
+         familyi={C\bibinitperiod},
+         given={Yu-Hsin},
+         giveni={Y\bibinithyphendelim H\bibinitperiod},
+      }}%
+      {{hash=YTJ}{%
+         family={Yang},
+         familyi={Y\bibinitperiod},
+         given={Tien-Ju},
+         giveni={T\bibinithyphendelim J\bibinitperiod},
+      }}%
+      {{hash=EJ}{%
+         family={Emer},
+         familyi={E\bibinitperiod},
+         given={Joel},
+         giveni={J\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{SV+1}
+    \strng{fullhash}{SVCYHYTJEJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Efficient processing of deep neural networks: A tutorial and survey}
+    \field{journaltitle}{arXiv:1703.09039}
+    \field{year}{2017}
+  \endentry
+
+  \entry{cheng2017compression}{article}{}
+    \name{author}{4}{}{%
+      {{hash=CY}{%
+         family={Cheng},
+         familyi={C\bibinitperiod},
+         given={Yu},
+         giveni={Y\bibinitperiod},
+      }}%
+      {{hash=WD}{%
+         family={Wang},
+         familyi={W\bibinitperiod},
+         given={Duo},
+         giveni={D\bibinitperiod},
+      }}%
+      {{hash=ZP}{%
+         family={Zhou},
+         familyi={Z\bibinitperiod},
+         given={Pan},
+         giveni={P\bibinitperiod},
+      }}%
+      {{hash=ZT}{%
+         family={Zhang},
+         familyi={Z\bibinitperiod},
+         given={Tao},
+         giveni={T\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{CY+1}
+    \strng{fullhash}{CYWDZPZT1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{A survey of model compression and acceleration for deep neural networks}
+    \field{journaltitle}{arXiv:1710.09282}
+    \field{year}{2017}
+  \endentry
+
+  \entry{lecun2015deep}{article}{}
+    \name{author}{3}{}{%
+      {{hash=LY}{%
+         family={LeCun},
+         familyi={L\bibinitperiod},
+         given={Yann},
+         giveni={Y\bibinitperiod},
+      }}%
+      {{hash=BY}{%
+         family={Bengio},
+         familyi={B\bibinitperiod},
+         given={Yoshua},
+         giveni={Y\bibinitperiod},
+      }}%
+      {{hash=HG}{%
+         family={Hinton},
+         familyi={H\bibinitperiod},
+         given={Geoffrey},
+         giveni={G\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{LYBYHG1}
+    \strng{fullhash}{LYBYHG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{number}{7553}
+    \field{pages}{436\bibrangedash 444}
+    \field{title}{Deep learning}
+    \field{volume}{521}
+    \field{journaltitle}{Nature}
+    \field{year}{2015}
+  \endentry
+
+  \entry{vaswani2017attention}{inproceedings}{}
+    \true{moreauthor}
+    \true{morelabelname}
+    \name{author}{3}{}{%
+      {{hash=VA}{%
+         family={Vaswani},
+         familyi={V\bibinitperiod},
+         given={Ashish},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=SN}{%
+         family={Shazeer},
+         familyi={S\bibinitperiod},
+         given={Noam},
+         giveni={N\bibinitperiod},
+      }}%
+      {{hash=PN}{%
+         family={Parmar},
+         familyi={P\bibinitperiod},
+         given={Niki},
+         giveni={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{VASNPN+1}
+    \strng{fullhash}{VASNPN+1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{NeurIPS}
+    \field{title}{Attention is all you need}
+    \field{year}{2017}
+  \endentry
+
+  \entry{dosovitskiy2021vit}{inproceedings}{}
+    \true{moreauthor}
+    \true{morelabelname}
+    \name{author}{3}{}{%
+      {{hash=DA}{%
+         family={Dosovitskiy},
+         familyi={D\bibinitperiod},
+         given={Alexey},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=BL}{%
+         family={Beyer},
+         familyi={B\bibinitperiod},
+         given={Lucas},
+         giveni={L\bibinitperiod},
+      }}%
+      {{hash=KA}{%
+         family={Kolesnikov},
+         familyi={K\bibinitperiod},
+         given={Alexander},
+         giveni={A\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{DABLKA+1}
+    \strng{fullhash}{DABLKA+1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{ICLR}
+    \field{title}{An image is worth 16x16 words: Transformers for image recognition at scale}
+    \field{year}{2021}
+  \endentry
+
+  \entry{gholami2021quant}{article}{}
+    \true{moreauthor}
+    \true{morelabelname}
+    \name{author}{3}{}{%
+      {{hash=GA}{%
+         family={Gholami},
+         familyi={G\bibinitperiod},
+         given={Amir},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=KS}{%
+         family={Kim},
+         familyi={K\bibinitperiod},
+         given={Sehoon},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=DZ}{%
+         family={Dong},
+         familyi={D\bibinitperiod},
+         given={Zhen},
+         giveni={Z\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{GAKSDZ+1}
+    \strng{fullhash}{GAKSDZ+1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{A survey of quantization methods for efficient neural network inference}
+    \field{journaltitle}{arXiv:2103.13630}
+    \field{year}{2021}
+  \endentry
+
+  \entry{han2016deepcompression}{inproceedings}{}
+    \name{author}{3}{}{%
+      {{hash=HS}{%
+         family={Han},
+         familyi={H\bibinitperiod},
+         given={Song},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=MH}{%
+         family={Mao},
+         familyi={M\bibinitperiod},
+         given={Huizi},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=DWJ}{%
+         family={Dally},
+         familyi={D\bibinitperiod},
+         given={William\bibnamedelima J.},
+         giveni={W\bibinitperiod\bibinitdelim J\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{HSMHDWJ1}
+    \strng{fullhash}{HSMHDWJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{ICLR}
+    \field{title}{Deep compression: Compressing deep neural networks with pruning, trained quantization and huffman coding}
+    \field{year}{2016}
+  \endentry
+
+  \entry{hinton2015distill}{article}{}
+    \name{author}{3}{}{%
+      {{hash=HG}{%
+         family={Hinton},
+         familyi={H\bibinitperiod},
+         given={Geoffrey},
+         giveni={G\bibinitperiod},
+      }}%
+      {{hash=VO}{%
+         family={Vinyals},
+         familyi={V\bibinitperiod},
+         given={Oriol},
+         giveni={O\bibinitperiod},
+      }}%
+      {{hash=DJ}{%
+         family={Dean},
+         familyi={D\bibinitperiod},
+         given={Jeff},
+         giveni={J\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{HGVODJ1}
+    \strng{fullhash}{HGVODJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Distilling the knowledge in a neural network}
+    \field{journaltitle}{arXiv:1503.02531}
+    \field{year}{2015}
+  \endentry
+
+  \entry{cai2019proxylessnas}{inproceedings}{}
+    \name{author}{3}{}{%
+      {{hash=CH}{%
+         family={Cai},
+         familyi={C\bibinitperiod},
+         given={Han},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=ZL}{%
+         family={Zhu},
+         familyi={Z\bibinitperiod},
+         given={Ligeng},
+         giveni={L\bibinitperiod},
+      }}%
+      {{hash=HS}{%
+         family={Han},
+         familyi={H\bibinitperiod},
+         given={Song},
+         giveni={S\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{CHZLHS1}
+    \strng{fullhash}{CHZLHS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{booktitle}{ICLR}
+    \field{title}{ProxylessNAS: Direct neural architecture search on target task and hardware}
+    \field{year}{2019}
+  \endentry
+\enddatalist
+\endinput
