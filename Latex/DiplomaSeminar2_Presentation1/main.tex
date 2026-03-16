@@ -88,6 +88,42 @@
   year      = {2022},
   doi       = {10.1007/978-3-030-86261-9_8}
 }
+@inproceedings{Redmon2016YOLO,
+  title={You Only Look Once: Unified, Real-Time Object Detection},
+  author={Redmon, Joseph and Divvala, Santosh and Girshick, Ross and Farhadi, Ali},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2016}
+}
+@article{Tan2020EfficientDet,
+  title={EfficientDet: Scalable and Efficient Object Detection},
+  author={Tan, Mingxing and Pang, Ruoming and Le, Quoc V.},
+  journal={arXiv preprint arXiv:1911.09070},
+  year={2020}
+}
+@article{Howard2017MobileNets,
+  title={MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications},
+  author={Howard, Andrew G. and Zhu, Menglong and Chen, Bo and Kalenichenko, Dmitry and Wang, Weijun and Weyand, Tobias and Andreetto, Marco and Adam, Hartwig},
+  journal={arXiv preprint arXiv:1704.04861},
+  year={2017}
+}
+@inproceedings{Liu2016SSD,
+  title={SSD: Single Shot MultiBox Detector},
+  author={Liu, Wei and Anguelov, Dragomir and Erhan, Dumitru and Szegedy, Christian and Reed, Scott and Fu, Cheng-Yang and Berg, Alexander C.},
+  booktitle={European Conference on Computer Vision (ECCV)},
+  year={2016}
+}
+@inproceedings{Carion2020DETR,
+  title={End-to-End Object Detection with Transformers},
+  author={Carion, Nicolas and Massa, Francisco and Synnaeve, Gabriel and Usunier, Nicolas and Kirillov, Alexander and Zagoruyko, Sergey},
+  booktitle={European Conference on Computer Vision (ECCV)},
+  year={2020}
+}
+@inproceedings{Lin2014COCO,
+  title={Microsoft COCO: Common Objects in Context},
+  author={Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll{\'a}r, Piotr and Zitnick, C. Lawrence},
+  booktitle={European Conference on Computer Vision (ECCV)},
+  year={2014}
+}
 \end{filecontents*}
 
 \usepackage[backend=bibtex,style=numeric,sorting=none]{biblatex}
@@ -126,7 +162,6 @@
 \end{itemize}
 
 \vspace{2mm}
-\textbf{Thesis context:} real-time object detection under edge-device constraints.
 \noteTime{1:00--1:50. Short motivation only; the focus is the research plan.}
 \end{frame}
 
@@ -173,21 +208,6 @@ provide the best \textbf{accuracy--latency--size trade-off} for real-time object
 \noteTime{1:50--3:00. This is the central slide for both methodology and later evaluation.}
 \end{frame}
 
-\begin{frame}{Research questions and working hypotheses}
-\begin{itemize}
-  \item Which detector architecture is the best starting point for edge deployment?
-  \item Which optimisation method gives the strongest benefit: quantisation, pruning, distillation, or their combination?
-  \item When does \textbf{PTQ} suffice, and when is \textbf{QAT} necessary?
-  \item Can distillation recover accuracy lost after compression?
-  \item How strongly do results depend on the target hardware and inference stack?
-\end{itemize}
-
-\vspace{2mm}
-\textbf{Working hypothesis:} combined pipelines such as \textbf{structured pruning + INT8 quantisation + distillation}
-will outperform single-method optimisation when measured on the real deployment stack
-\cite{sze2017efficient,cheng2017compression,gholami2021quant,hinton2015distill}.
-\noteTime{4:20--5:20. Connect the questions directly to planned experiments.}
-\end{frame}
 
 \begin{frame}{What success means in this thesis}
 \begin{itemize}
@@ -222,7 +242,6 @@ will outperform single-method optimisation when measured on the real deployment 
     \item \textbf{implementation and benchmarking},
     \item \textbf{quantitative evaluation} using consistent metrics.
   \end{itemize}
-  \item The final output is not a new theory, but a validated \textbf{decision framework and empirical comparison}.
 \end{itemize}
 \noteTime{6:20--7:20. Emphasise why an experimental design is the right methodology here.}
 \end{frame}
@@ -246,13 +265,6 @@ will outperform single-method optimisation when measured on the real deployment 
 \begin{frame}{Planned research design}
 \begin{columns}[T,onlytextwidth]
   \column{0.48\textwidth}
-  \textbf{Data sources}
-  \begin{itemize}
-    \item public object detection dataset,
-    \item COCO-style annotations,
-    \item train/validation split for fine-tuning and evaluation,
-    \item representative calibration subset for PTQ.
-  \end{itemize}
 
   \textbf{Candidate models}
   \begin{itemize}
@@ -286,7 +298,7 @@ will outperform single-method optimisation when measured on the real deployment 
 
 \begin{frame}{Why COCO is a useful benchmark dataset}
 \begin{itemize}
-  \item \textbf{MS COCO} is one of the most widely used benchmarks for object detection.
+  \item \textbf{MS COCO} is one of the most widely used benchmarks for object detection \cite{Lin2014COCO}.
   \item It is useful for this thesis because it provides:
   \begin{itemize}
     \item a large number of labelled images,
@@ -304,12 +316,12 @@ will outperform single-method optimisation when measured on the real deployment 
 \begin{itemize}
   \item The planned workflow distinguishes between \textbf{three roles}:
   \begin{itemize}
-    \item a \textbf{baseline edge-friendly detector},
+    \item a \textbf{baseline edge-friendly detector} \cite{Redmon2016YOLO,Tan2020EfficientDet,Howard2017MobileNets,Liu2016SSD},
     \item a \textbf{teacher model} with stronger accuracy,
-    \item one or more \textbf{compressed student variants}.
+    \item one or more \textbf{compressed student variants} improved, if needed, by distillation \cite{hinton2015distill}.
   \end{itemize}
   \item The baseline should already be realistic for deployment, because compressing an unsuitable architecture may not produce a useful final system.
-  \item The teacher model does not need to be deployable on the edge device; its purpose is to improve training through distillation.
+  \item The teacher model does not need to be deployable on the edge device; its purpose is to improve training through distillation \cite{hinton2015distill}.
   \item The final comparison will therefore include both:
   \begin{itemize}
     \item \textbf{architecture-level choices},
@@ -340,32 +352,31 @@ will outperform single-method optimisation when measured on the real deployment 
   \item \textbf{DETR-style / RF-DETR models}
   \begin{itemize}
     \item interesting for comparing modern transformer-based detection with CNN-based real-time detectors,
-    \item one checkpoint is already available in the repository.
   \end{itemize}
 \end{itemize}
 
 \vspace{1mm}
-\textbf{Selection principle:} choose architectures that represent different accuracy--efficiency profiles and are realistic to benchmark within the thesis schedule.
-\noteTime{11:00--12:00. This slide gives concrete examples without forcing the final choice too early.}
+\footnotesize Representative references: YOLO \cite{Redmon2016YOLO}; EfficientDet \cite{Tan2020EfficientDet}; MobileNets \cite{Howard2017MobileNets}; SSD \cite{Liu2016SSD}; DETR \cite{Carion2020DETR}.
+
 \end{frame}
 
 \begin{frame}{Planned optimisation methods}
 \begin{itemize}
-  \item \textbf{Quantisation}
+  \item \textbf{Quantisation} \cite{gholami2021quant}
   \begin{itemize}
     \item FP16 and INT8 as the main practical precision targets,
     \item PTQ for fast conversion,
     \item QAT when PTQ gives too much accuracy loss.
   \end{itemize}
-  \item \textbf{Pruning}
+  \item \textbf{Pruning} \cite{han2016deepcompression,cheng2017compression}
   \begin{itemize}
     \item mainly structured pruning, because it is more likely to improve real latency on standard hardware.
   \end{itemize}
-  \item \textbf{Knowledge distillation}
+  \item \textbf{Knowledge distillation} \cite{hinton2015distill}
   \begin{itemize}
     \item used as a recovery mechanism after compression or as guidance for a compact student model.
   \end{itemize}
-  \item \textbf{Efficient-by-design model selection}
+  \item \textbf{Efficient-by-design model selection} \cite{cai2019proxylessnas,Tan2020EfficientDet}
   \begin{itemize}
     \item using published efficient architectures instead of performing a full NAS search.
   \end{itemize}
@@ -373,20 +384,19 @@ will outperform single-method optimisation when measured on the real deployment 
 \noteTime{12:00--13:00. This is the main technical toolbox slide.}
 \end{frame}
 
-\begin{frame}{Less-known methods: brief explanation}
+\begin{frame}{Brief explanation of methods}
 \begin{itemize}
   \item \textbf{Post-training quantisation (PTQ):}
-  convert a trained FP32 model to lower precision after training, usually using a calibration subset.
+  convert a trained FP32 model to lower precision after training, usually using a calibration subset \cite{gholami2021quant}.
   \item \textbf{Quantisation-aware training (QAT):}
-  simulate low-precision effects during training so the model adapts to rounding and clipping.
+  simulate low-precision effects during training so the model adapts to rounding and clipping \cite{gholami2021quant}.
   \item \textbf{Structured pruning:}
-  remove complete channels, filters, or blocks to obtain a smaller dense model.
+  remove complete channels, filters, or blocks to obtain a smaller dense model \cite{han2016deepcompression,cheng2017compression}.
   \item \textbf{Knowledge distillation:}
-  train a smaller student to mimic a larger teacher, often improving compact-model accuracy.
+  train a smaller student to mimic a larger teacher, often improving compact-model accuracy \cite{hinton2015distill}.
 \end{itemize}
 
 \vspace{1mm}
-\textbf{Reason for including them:} these methods are central to the thesis and may be less familiar than standard training or inference.
 \noteTime{13:00--14:00. Keep this concise but explicit, since the seminar rules ask for brief explanation of less-known methods.}
 \end{frame}
 
@@ -450,15 +460,13 @@ $\downarrow$ \\
     \item structured pruning as the main pruning strategy,
     \item PTQ as a fast baseline and QAT as the stronger quantised approach,
     \item teacher--student distillation for accuracy recovery,
-    \item architecture comparison rather than a full NAS search.
+    \item architecture comparison rather than a full NAS search, based on published efficient detector families \cite{Redmon2016YOLO,Tan2020EfficientDet,Howard2017MobileNets,Liu2016SSD,Carion2020DETR}.
   \end{itemize}
   \item \textbf{Computing environment:} Python-based workflow, GPU acceleration when available, edge-like benchmarking on the target runtime.
-  \item \textbf{Planned tools:} PyTorch for model development, TorchMetrics for detection metrics, notebook/script-based benchmarking for controlled experiments, psutil-based memory measurement, and configuration-driven runs for reproducibility.
+  \item \textbf{Planned tools:} PyTorch for model development, TorchMetrics.
   \item \textbf{Optional deployment tools:} ONNX Runtime, TensorRT, TFLite, or OpenVINO, depending on which export path is stable enough for the selected model and hardware target.
 \end{itemize}
 
-\footnotesize Method choices are consistent with prior work on efficient inference
-\cite{han2016deepcompression,gholami2021quant,hinton2015distill,cai2019proxylessnas}.
 \noteTime{15:50--17:00. Explain why the scope is controlled: realistic for the thesis timeline.}
 \end{frame}
 
@@ -483,7 +491,7 @@ $\downarrow$ \\
 \begin{itemize}
   \item \textbf{Primary metrics:}
   \begin{itemize}
-    \item detection accuracy: mAP@[.5:.95], optionally mAP@0.5,
+    \item detection accuracy: mAP@[.5:.95], optionally mAP@0.5, following standard COCO-style evaluation \cite{Lin2014COCO},
     \item latency: model-only and end-to-end time, plus FPS,
     \item model size and peak memory usage.
   \end{itemize}
@@ -515,21 +523,6 @@ $\downarrow$ \\
 \noteTime{19:10--19:50. This helps justify why the result may be a Pareto-style conclusion, not one absolute winner.}
 \end{frame}
 
-\begin{frame}{How the methodology leads to the objective}
-\begin{itemize}
-  \item The \textbf{objective} is to identify the best practical trade-off for edge deployment.
-  \item The \textbf{methodology} provides a controlled comparison between baseline and optimised models.
-  \item The \textbf{research design} specifies what will be compared, on which data, with which parameters.
-  \item The \textbf{architecture and implementation plan} make the work feasible and reproducible.
-  \item The \textbf{validation strategy} shows how I will decide whether an optimisation actually helps.
-\end{itemize}
-
-\vspace{2mm}
-\begin{block}{Expected thesis outcome}
-Not just ``a smaller model'', but an evidence-based answer to which optimisation strategy is most suitable for the selected edge deployment scenario.
-\end{block}
-\noteTime{19:50--20:30. This is the main logic chain of the seminar requirements.}
-\end{frame}
 
 \begin{frame}{Current status and discussion points}
 \begin{itemize}
