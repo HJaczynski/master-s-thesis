@@ -33,7 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 detectors = [
     "rfdetr>=1.6.0",
-    "ultralytics>=8.0.0",
+    "ultralytics>=8.4.0",
     "onnx>=1.16.0",
 ]
 export = [

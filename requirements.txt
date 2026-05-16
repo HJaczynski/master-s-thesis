@@ -12,7 +12,7 @@ tqdm>=4.66.0
 
 # Detector/tooling dependencies
 rfdetr>=1.6.0
-ultralytics>=8.0.0
+ultralytics>=8.4.0
 onnx>=1.16.0
 
 # Optional export/runtime dependency. TensorRT support may require a separate

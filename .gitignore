@@ -98,6 +98,25 @@ target/
 profile_default/
 ipython_config.py
 
+# LaTeX tree: keep source documents, PDFs, images, and source assets only.
+# This prevents build artifacts such as .aux/.bbl/.toc/.synctex.gz from being
+# accidentally added anywhere under Latex/.
+Latex/**
+!Latex/**/
+!Latex/**/*.[tT][eE][xX]
+!Latex/**/*.[bB][iI][bB]
+!Latex/**/*.[pP][dD][fF]
+!Latex/**/*.[pP][nN][gG]
+!Latex/**/*.[jJ][pP][gG]
+!Latex/**/*.[jJ][pP][eE][gG]
+!Latex/**/*.[gG][iI][fF]
+!Latex/**/*.[sS][vV][gG]
+!Latex/**/*.[wW][eE][bB][pP]
+!Latex/**/*.[tT][tT][fF]
+!Latex/**/*.[oO][tT][fF]
+Latex/**/*-blx.bib
+Latex/**/.DS_Store
+
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:

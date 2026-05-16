@@ -84,3 +84,54 @@ models:
     license: AGPL-3.0
     priority: primary
     notes: Main YOLO baseline; use YOLOv8s if memory or iteration speed becomes a problem.
+
+  - id: yolo26n
+    family: yolo
+    generation: yolo26
+    role: newest_fast_yolo_baseline
+    framework: ultralytics
+    weights: yolo26n.pt
+    input_size: 640
+    published_coco_ap_50_95: 40.9
+    published_coco_ap_50_95_e2e: 40.1
+    published_cpu_onnx_ms: "38.9 +/- 0.7"
+    published_t4_tensorrt10_ms: "1.7 +/- 0.0"
+    published_params_m: 2.4
+    published_flops_g: 5.4
+    license: AGPL-3.0
+    priority: fallback
+    notes: Smallest YOLO26 detector; useful for smoke tests and edge-first comparisons.
+
+  - id: yolo26s
+    family: yolo
+    generation: yolo26
+    role: newest_small_yolo_baseline
+    framework: ultralytics
+    weights: yolo26s.pt
+    input_size: 640
+    published_coco_ap_50_95: 48.6
+    published_coco_ap_50_95_e2e: 47.8
+    published_cpu_onnx_ms: "87.2 +/- 0.9"
+    published_t4_tensorrt10_ms: "2.5 +/- 0.0"
+    published_params_m: 9.5
+    published_flops_g: 20.7
+    license: AGPL-3.0
+    priority: recommended
+    notes: Strong default YOLO26 size for RTX 3070 Ti iteration.
+
+  - id: yolo26m
+    family: yolo
+    generation: yolo26
+    role: newest_main_yolo_baseline
+    framework: ultralytics
+    weights: yolo26m.pt
+    input_size: 640
+    published_coco_ap_50_95: 53.1
+    published_coco_ap_50_95_e2e: 52.5
+    published_cpu_onnx_ms: "220.0 +/- 1.4"
+    published_t4_tensorrt10_ms: "4.7 +/- 0.1"
+    published_params_m: 20.4
+    published_flops_g: 68.2
+    license: AGPL-3.0
+    priority: primary
+    notes: Main newer YOLO baseline for comparison against YOLOv8m and RF-DETR Medium.

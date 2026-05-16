@@ -288,14 +288,14 @@ The use of these approaches may have an impact on the application of artificial 
 
 \section{Aim of the work}
 
-This thesis focuses on real-time object detection under a constrained local hardware budget. The goal is to compare how representative detector families respond to compression and acceleration methods when evaluated on the same dataset, hardware, and measurement protocol. The work concentrates on COCO-trained detectors from three design directions: RF-DETR as a modern real-time detection transformer, Swin Transformer based detection as a hierarchical vision transformer, and YOLO-style detection as a strong convolutional baseline \cite{Robinson2025RFDETR, Liu2021Swin, UltralyticsYOLOv8}.
+This thesis focuses on real-time object detection under a constrained local hardware budget. The goal is to compare how representative detector families respond to compression and acceleration methods when evaluated on the same dataset, hardware, and measurement protocol. The work concentrates on COCO-trained detectors from three design directions: RF-DETR as a modern real-time detection transformer, Swin Transformer based detection as a hierarchical vision transformer, and YOLO-style detection as a strong convolutional baseline. The YOLO line includes both YOLOv8 and the newer Ultralytics YOLO26 family, which introduces an NMS-free end-to-end inference path aimed at deployment efficiency \cite{Robinson2025RFDETR, Liu2021Swin, UltralyticsYOLOv8, UltralyticsYOLO26}.
 
 The experimental part will not train all detectors from scratch. Instead, it will use published COCO checkpoints and focus on evaluation, export, post-training quantisation, lightweight token reduction, and limited fine-tuning only where it is necessary to recover accuracy. This scope is suitable for a single NVIDIA GeForce RTX 3070 Ti with 8 GB of GPU memory.
 
 The study is guided by the following research questions:
 
 \begin{enumerate}
-    \item How do RF-DETR, Swin Transformer detection, and YOLO-style detection compare on the accuracy--latency--size trade-off when evaluated under the same COCO protocol?
+    \item How do RF-DETR, Swin Transformer detection, YOLOv8, and YOLO26 compare on the accuracy--latency--size trade-off when evaluated under the same COCO protocol?
     \item Do token-reduction methods preserve detection accuracy better in transformer-style detectors than direct channel or filter reduction does in convolutional detectors?
     \item How much accuracy is lost, and how much latency is gained, when moving from FP32 to FP16 and INT8 post-training quantisation for each detector family?
     \item Does the order of applying compression methods matter for object detection, for example token reduction followed by INT8 quantisation versus INT8 quantisation followed by token reduction?
@@ -838,14 +838,14 @@ Family & Candidate model & Reason for inclusion \\
 \hline
 Real-time DETR & RF-DETR Nano/Medium & Detection transformer designed for strong COCO accuracy--latency trade-offs and released with ready COCO checkpoints \cite{Robinson2025RFDETR}. \\
 Hierarchical ViT & Swin-T Mask R-CNN & Windowed hierarchical transformer detector with public MMDetection configs and COCO checkpoints \cite{Liu2021Swin}. \\
-CNN/YOLO baseline & YOLOv8s or YOLOv8m & Dense convolutional one-stage detector with widely used COCO checkpoints and simple export/benchmark tooling \cite{UltralyticsYOLOv8}. \\
+CNN/YOLO baseline & YOLOv8s/m and YOLO26n/s/m & Dense convolutional one-stage detector line with widely used COCO checkpoints. YOLOv8 provides a historical Ultralytics baseline, while YOLO26 adds a newer NMS-free deployment-oriented comparison point \cite{UltralyticsYOLOv8, UltralyticsYOLO26}. \\
 \hline
 \end{tabular}
 \caption{Detector families selected for the experimental comparison.}
 \label{tab:detector_families}
 \end{table}
 
-RF-DETR Medium is the preferred local RF-DETR baseline because a checkpoint is already available in the project workspace. RF-DETR Nano should be used as a fallback if memory or export constraints make the medium variant inconvenient. For the Swin family, Swin-T Mask R-CNN is preferred over larger Swin variants because it gives the hierarchical transformer comparison without exceeding the practical limits of the local GPU. For the CNN baseline, YOLOv8m gives a strong accuracy baseline, while YOLOv8s can be used for faster iteration.
+RF-DETR Medium is the preferred local RF-DETR baseline because a checkpoint is already available in the project workspace. RF-DETR Nano should be used as a fallback if memory or export constraints make the medium variant inconvenient. For the Swin family, Swin-T Mask R-CNN is preferred over larger Swin variants because it gives the hierarchical transformer comparison without exceeding the practical limits of the local GPU. For the CNN baseline, YOLOv8m gives a strong historical YOLO baseline, while YOLO26m is the main newer YOLO comparison. YOLOv8s and YOLO26s are useful for quick iteration, and YOLO26l/x are optional upper Pareto points if the 8 GB GPU memory budget allows stable batch-size-1 evaluation.
 
 \section{Compression methods}
 
