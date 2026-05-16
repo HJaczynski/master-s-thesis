@@ -1,0 +1,86 @@
+hardware:
+  local_gpu: NVIDIA GeForce RTX 3070 Ti
+  local_gpu_memory_gb: 8
+  primary_batch_size: 1
+  secondary_batch_size: 8
+  notes:
+    - Use batch size 1 for the main latency claims.
+    - Treat batch size 8 as throughput-only and skip it for variants that exceed memory.
+
+dataset:
+  name: COCO 2017
+  root: data/coco
+  val_images: data/coco/val2017
+  val_annotations: data/coco/annotations/instances_val2017.json
+  calibration_images: 500
+  smoke_test_images: 64
+
+models:
+  - id: rfdetr_nano
+    family: rfdetr
+    role: fast_transformer
+    framework: rfdetr
+    class_name: RFDETRNano
+    checkpoint: auto
+    input_size: 384
+    published_coco_ap_50_95: 48.4
+    published_coco_ap_50: 67.6
+    published_params_m: 30.5
+    license: Apache-2.0
+    priority: fallback
+    notes: Smaller RF-DETR variant for quick local iteration.
+
+  - id: rfdetr_medium
+    family: rfdetr
+    role: main_transformer
+    framework: rfdetr
+    class_name: RFDETRMedium
+    checkpoint: src/rf-detr-medium.pth
+    input_size: 576
+    published_coco_ap_50_95: 54.7
+    published_coco_ap_50: 73.6
+    published_params_m: 33.7
+    license: Apache-2.0
+    priority: primary
+    notes: Preferred RF-DETR baseline because the checkpoint is already present.
+
+  - id: swin_t_mask_rcnn
+    family: swin
+    role: hierarchical_vit
+    framework: mmdetection
+    config: configs/swin/mask_rcnn_swin-t-p4-w7_fpn_3x_coco.py
+    checkpoint: checkpoints/mask_rcnn_swin_tiny_patch4_window7.pth
+    input_size: "short-edge 800, max 1333"
+    published_coco_ap_50_95: 46.0
+    published_mask_ap: 41.6
+    published_params_m: 48
+    published_flops_g: 267
+    license: Apache-2.0
+    priority: primary
+    notes: Use the official Swin object detection repo or a compatible MMDetection config.
+
+  - id: yolo_v8s
+    family: yolo
+    role: fast_cnn_baseline
+    framework: ultralytics
+    weights: yolov8s.pt
+    input_size: 640
+    published_coco_ap_50_95: 44.9
+    published_params_m: 11.2
+    published_flops_g: 28.6
+    license: AGPL-3.0
+    priority: fallback
+    notes: Fast baseline for smoke tests and pruning experiments.
+
+  - id: yolo_v8m
+    family: yolo
+    role: main_cnn_baseline
+    framework: ultralytics
+    weights: yolov8m.pt
+    input_size: 640
+    published_coco_ap_50_95: 50.2
+    published_params_m: 25.9
+    published_flops_g: 78.9
+    license: AGPL-3.0
+    priority: primary
+    notes: Main YOLO baseline; use YOLOv8s if memory or iteration speed becomes a problem.

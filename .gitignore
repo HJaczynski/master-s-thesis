@@ -10,6 +10,16 @@ __pycache__/
 *.pt
 *.pth
 
+# Local experiment data and generated artifacts
+data/
+checkpoints/
+artifacts/
+exports/
+results/raw/
+results/*.csv
+results/*.json
+results/*.parquet
+
 .vscode/
 
 # Distribution / packaging

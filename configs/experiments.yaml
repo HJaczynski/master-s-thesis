@@ -1,0 +1,144 @@
+benchmark:
+  warmup_iterations: 50
+  timed_iterations: 200
+  latency_statistic: median
+  report_iqr: true
+  cuda_synchronize: true
+  seeds: [42, 1337, 2026]
+  batch_sizes: [1, 8]
+
+metrics:
+  accuracy:
+    - coco_map_50_95
+    - coco_ap_50
+    - coco_ap_small
+    - coco_ap_medium
+    - coco_ap_large
+  efficiency:
+    - latency_ms_median
+    - latency_ms_iqr
+    - throughput_images_per_second
+    - params_m
+    - flops_g
+    - model_size_mb
+    - peak_gpu_memory_mb
+    - optional_power_watts
+    - optional_energy_j_per_image
+
+variants:
+  - id: fp32_baseline
+    label: FP32 baseline
+    applies_to: [rfdetr, swin, yolo]
+    precision: fp32
+    quantization: none
+    token_reduction: none
+    pruning: none
+    priority: required
+
+  - id: fp16
+    label: FP16 inference
+    applies_to: [rfdetr, swin, yolo]
+    precision: fp16
+    quantization: none
+    token_reduction: none
+    pruning: none
+    priority: required
+
+  - id: int8_ptq
+    label: INT8 PTQ
+    applies_to: [rfdetr, swin, yolo]
+    precision: int8
+    quantization:
+      method: ptq
+      calibration_images: 500
+    token_reduction: none
+    pruning: none
+    priority: required
+
+  - id: token_merge
+    label: Token reduction only
+    applies_to: [rfdetr, swin]
+    precision: fp32
+    quantization: none
+    token_reduction:
+      method: tome_style
+      insertion: mid_encoder
+      merge_ratio: 0.10
+    pruning: none
+    priority: required
+
+  - id: token_merge_fp16
+    label: Token reduction + FP16
+    applies_to: [rfdetr, swin]
+    precision: fp16
+    quantization: none
+    token_reduction:
+      method: tome_style
+      insertion: mid_encoder
+      merge_ratio: 0.10
+    pruning: none
+    priority: recommended
+
+  - id: token_merge_int8_ptq
+    label: Token reduction + INT8 PTQ
+    applies_to: [rfdetr, swin]
+    precision: int8
+    quantization:
+      method: ptq
+      calibration_images: 500
+    token_reduction:
+      method: tome_style
+      insertion: mid_encoder
+      merge_ratio: 0.10
+    pruning: none
+    priority: required
+
+  - id: token_merge_int8_light_prune
+    label: Token reduction + INT8 PTQ + light pruning
+    applies_to: [rfdetr, swin]
+    precision: int8
+    quantization:
+      method: ptq
+      calibration_images: 500
+    token_reduction:
+      method: tome_style
+      insertion: mid_encoder
+      merge_ratio: 0.10
+    pruning:
+      method: structured
+      target_sparsity: 0.15
+    priority: optional
+
+  - id: yolo_light_prune
+    label: YOLO light structured pruning
+    applies_to: [yolo]
+    precision: fp32
+    quantization: none
+    token_reduction: none
+    pruning:
+      method: structured_channel
+      target_sparsity: 0.20
+    priority: recommended
+
+  - id: yolo_prune_int8_ptq
+    label: YOLO pruning + INT8 PTQ
+    applies_to: [yolo]
+    precision: int8
+    quantization:
+      method: ptq
+      calibration_images: 500
+    token_reduction: none
+    pruning:
+      method: structured_channel
+      target_sparsity: 0.20
+    priority: required
+
+  - id: progressive_order_ablation
+    label: Compression order ablation
+    applies_to: [rfdetr, swin, yolo]
+    precision: mixed
+    quantization: compare_orders
+    token_reduction: compare_orders
+    pruning: compare_orders
+    priority: optional
+    notes: Compare weaker-first and stronger-first compression sequences.

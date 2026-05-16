@@ -47,6 +47,7 @@
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
+\setlength{\headheight}{14pt}
 \fancyhf{}
 % PAGINATION: LEFT ALIGNMENT ON EVEN PAGES, RIGHT ALIGNMENT ON ODD PAGES 
 \fancyfoot[LE,RO]{\thepage} 
@@ -208,9 +209,9 @@
 \begin{center}
 \title
 \end{center}
-Deep learning models achieve high accuracy in computer vision, but their computational and memory demands often prevent direct deployment on resource-constrained edge devices such as cameras, robots, drones, and mobile platforms. This thesis examines how to make modern object detection models suitable for real-time on-device inference by reducing their computational cost while maintaining detection quality. The work reviews the main architectural families used in vision (convolutional networks and transformer-based models) and then focuses on practical efficiency methods applicable to edge deployment. In particular, it studies model compression and acceleration techniques, including quantisation (post-training and quantisation-aware training), pruning (structured and unstructured), and knowledge distillation, as well as architecture-level approaches such as hardware-aware neural architecture search. The proposed evaluation emphasises realistic deployment conditions and compares methods using consistent metrics, including detection accuracy, inference latency, and model size. Where feasible, it also considers energy-related aspects. The overall goal is to identify which techniques, or combinations of techniques, provide the most favourable accuracy--latency--size trade-off for real-time object detection on constrained hardware and how strongly the results depend on the target device and inference runtime.
+Deep learning models achieve high accuracy in computer vision, but their computational and memory demands often prevent direct deployment on resource-constrained edge devices such as cameras, robots, drones, and mobile platforms. This thesis examines practical compression and acceleration techniques for modern object detectors evaluated on the COCO benchmark. The study compares three architectural families: an RF-DETR real-time detection transformer, a Swin-Transformer detector with hierarchical windowed attention, and a YOLO-style convolutional baseline. For each family, the work evaluates precision reduction, INT8 post-training quantisation, token reduction for transformer-style models, and light structured pruning. The proposed evaluation emphasises realistic deployment conditions on an NVIDIA GeForce RTX 3070 Ti and uses consistent metrics, including COCO mAP, AP@0.5, inference latency, model size, FLOPs, and, where feasible, energy-related measurements. The overall goal is to identify which techniques, and which order of applying them, provide the most favourable accuracy--latency--size trade-off for real-time object detection under limited hardware resources.
 
-\noindent \textbf{Keywords:} Model compression, efficiency optimisation, deep learning, neural networks, quantisation, pruning, knowledge distillation, hardware-aware neural architecture search, edge device deployment
+\noindent \textbf{Keywords:} Model compression, object detection, COCO, RF-DETR, Swin Transformer, YOLO, token reduction, quantisation, pruning, edge deployment
 \end{abstract}
 }
 
@@ -287,17 +288,21 @@ The use of these approaches may have an impact on the application of artificial 
 
 \section{Aim of the work}
 
-This thesis focuses on real-time object detection on resource-limited devices. The goal is to investigate and compare methods that reduce the computational and memory requirements of object detection models, enabling them to run efficiently on edge hardware without compromising detection quality. The work will review modern approaches used for on-device deployment, implement selected solutions, and evaluate them using consistent and practical metrics such as detection accuracy, inference latency, model size, and (where possible) energy-related measurements.
+This thesis focuses on real-time object detection under a constrained local hardware budget. The goal is to compare how representative detector families respond to compression and acceleration methods when evaluated on the same dataset, hardware, and measurement protocol. The work concentrates on COCO-trained detectors from three design directions: RF-DETR as a modern real-time detection transformer, Swin Transformer based detection as a hierarchical vision transformer, and YOLO-style detection as a strong convolutional baseline \cite{Robinson2025RFDETR, Liu2021Swin, UltralyticsYOLOv8}.
+
+The experimental part will not train all detectors from scratch. Instead, it will use published COCO checkpoints and focus on evaluation, export, post-training quantisation, lightweight token reduction, and limited fine-tuning only where it is necessary to recover accuracy. This scope is suitable for a single NVIDIA GeForce RTX 3070 Ti with 8 GB of GPU memory.
 
 The study is guided by the following research questions:
 
 \begin{enumerate}
-    \item Which model architectures are the most appropriate for deployment on resource-limited devices when considering the trade-off between accuracy and computational cost?
-    \item Which methods for making models smaller and faster, or combinations of such methods, provide the best trade-off between accuracy, inference speed, model size, and energy usage on edge devices?
-    \item How do post-training quantisation and quantisation-aware training differ in their impact on object detection accuracy and inference latency?
-    \item Under what conditions can training a smaller model to mimic a larger one provide better results than relying only on direct training or model simplification?
-    \item To what extent do the final results depend on the target hardware and the software stack used for deployment?
+    \item How do RF-DETR, Swin Transformer detection, and YOLO-style detection compare on the accuracy--latency--size trade-off when evaluated under the same COCO protocol?
+    \item Do token-reduction methods preserve detection accuracy better in transformer-style detectors than direct channel or filter reduction does in convolutional detectors?
+    \item How much accuracy is lost, and how much latency is gained, when moving from FP32 to FP16 and INT8 post-training quantisation for each detector family?
+    \item Does the order of applying compression methods matter for object detection, for example token reduction followed by INT8 quantisation versus INT8 quantisation followed by token reduction?
+    \item Which compressed configurations form the best Pareto frontier for deployment on the RTX 3070 Ti, and how different are the conclusions from FLOPs-only estimates?
 \end{enumerate}
+
+The expected contribution is an empirical comparison of detector compression strategies under a reproducible local protocol, together with a discussion of which optimisation techniques are most practical for real-time edge-oriented deployment.
 
 
 
@@ -802,6 +807,114 @@ This chapter introduced the core building blocks used throughout the thesis: neu
 It then motivated \emph{frugal artificial intelligence} as a practical viewpoint where accuracy must be balanced against latency, memory, energy, and data/communication constraints typical of edge deployment \cite{Sze2017EfficientProcessing}. To meet these constraints, the chapter reviewed four main families of efficiency methods: quantisation (lower numerical precision), pruning (removing parameters/structures), knowledge distillation (teacher--student transfer), and hardware-aware NAS (architectures optimised under device-specific cost metrics). Finally, it highlighted that real deployment performance depends on the full hardware--software stack (e.g., operator support, memory bandwidth, runtime kernels), so evaluation should reflect realistic conditions rather than relying only on proxy metrics.
 
 
+\chapter{Experimental methodology}
+
+This chapter defines the experimental plan used to compare model compression strategies for object detection. The central idea is to evaluate a small but representative set of COCO-trained detectors under a shared protocol, then measure how accuracy and runtime change after applying progressively stronger efficiency methods. The study uses COCO because it is a standard object detection benchmark with established evaluation metrics and public checkpoints \cite{Lin2014COCO}.
+
+\section{Hardware and practical scope}
+
+The local experimental device is an NVIDIA GeForce RTX 3070 Ti with 8 GB of GPU memory. This hardware is powerful enough for inference benchmarking, export experiments, calibration, and short fine-tuning runs, but it is not appropriate for training large COCO detectors from scratch. Therefore, the experimental scope is deliberately focused on:
+
+\begin{itemize}
+    \item COCO validation-set evaluation of published checkpoints,
+    \item FP32 and FP16 inference on the local GPU,
+    \item INT8 post-training quantisation using a representative calibration subset,
+    \item token reduction in transformer-style models,
+    \item light structured pruning with limited fine-tuning when memory permits.
+\end{itemize}
+
+Batch size 1 is the primary latency setting because it corresponds to real-time camera-like inference. Batch size 8 is treated as a secondary throughput setting and may be skipped for the largest variants if memory usage becomes unstable.
+
+\section{Candidate detector families}
+
+The study compares three detector families that cover different architectural assumptions:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{0.22\linewidth} p{0.28\linewidth} p{0.38\linewidth}}
+\hline
+Family & Candidate model & Reason for inclusion \\
+\hline
+Real-time DETR & RF-DETR Nano/Medium & Detection transformer designed for strong COCO accuracy--latency trade-offs and released with ready COCO checkpoints \cite{Robinson2025RFDETR}. \\
+Hierarchical ViT & Swin-T Mask R-CNN & Windowed hierarchical transformer detector with public MMDetection configs and COCO checkpoints \cite{Liu2021Swin}. \\
+CNN/YOLO baseline & YOLOv8s or YOLOv8m & Dense convolutional one-stage detector with widely used COCO checkpoints and simple export/benchmark tooling \cite{UltralyticsYOLOv8}. \\
+\hline
+\end{tabular}
+\caption{Detector families selected for the experimental comparison.}
+\label{tab:detector_families}
+\end{table}
+
+RF-DETR Medium is the preferred local RF-DETR baseline because a checkpoint is already available in the project workspace. RF-DETR Nano should be used as a fallback if memory or export constraints make the medium variant inconvenient. For the Swin family, Swin-T Mask R-CNN is preferred over larger Swin variants because it gives the hierarchical transformer comparison without exceeding the practical limits of the local GPU. For the CNN baseline, YOLOv8m gives a strong accuracy baseline, while YOLOv8s can be used for faster iteration.
+
+\section{Compression methods}
+
+The compression study varies three main dimensions.
+
+\subsection{Token reduction}
+
+Token reduction applies only to transformer-style detectors. The baseline implementation will use a training-free token merging strategy inspired by Token Merging (ToMe), MaMe, and Mutual Pair Merging (MPM) \cite{Bolya2023ToMe, MaMe2026, MPM2026}. In RF-DETR, token merging will be inserted in encoder layers before the decoder consumes image features. In Swin, token reduction will be explored either within local windows or after window attention, depending on which implementation causes the smallest disruption to the MMDetection model.
+
+The initial token-reduction setting should be conservative: one mid-network merge point and a small merge ratio. More aggressive settings are added only after the baseline setting has been validated on a COCO subset.
+
+\subsection{Quantisation}
+
+The quantisation comparison includes FP32, FP16, and INT8 post-training quantisation. FP16 measures the benefit of using tensor-core-friendly reduced precision. INT8 PTQ requires calibration on a representative COCO subset before evaluating on the validation set. Quantisation-aware training is reserved as an optional extension for one model family if PTQ produces a large accuracy loss.
+
+\subsection{Structured pruning}
+
+Structured pruning removes complete channels, filters, attention heads, or blocks, rather than individual unstructured weights. The main reason is practical: structured changes are more likely to reduce real latency on common inference backends \cite{Li2017PruningFilters}. In this thesis, pruning is treated as a light final compression step after the more deployment-friendly methods have been tested.
+
+\section{Experiment matrix}
+
+The full design is intentionally larger than the minimum required result set. This makes it possible to stop early while still preserving a coherent thesis.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{0.27\linewidth} p{0.18\linewidth} p{0.42\linewidth}}
+\hline
+Variant & Priority & Purpose \\
+\hline
+FP32 baseline & Required & Establish published-checkpoint accuracy and local latency. \\
+FP16 inference & Required & Measure low-risk acceleration on the RTX 3070 Ti. \\
+INT8 PTQ & Required & Measure post-training quantisation accuracy loss and speedup. \\
+Token reduction only & Required for RF-DETR/Swin & Isolate the effect of reducing token count. \\
+Token reduction + FP16 & Recommended & Test whether token reduction and mixed precision compose cleanly. \\
+Token reduction + INT8 PTQ & Required for RF-DETR/Swin & Main transformer compression result. \\
+Token reduction + INT8 PTQ + pruning & Optional & Highest compression setting if time remains. \\
+Alternative method order & Optional & Test the Progressive Intensity hypothesis for object detection \cite{Kim2026CompressionOrder}. \\
+\hline
+\end{tabular}
+\caption{Compression variants planned for each detector family.}
+\label{tab:experiment_matrix}
+\end{table}
+
+For YOLO, the token-reduction rows are replaced by structured pruning rows because token merging is not a natural operation for a convolutional detector. The key comparison is therefore not identical operations in every model, but matched compression intent: reduce representation size, reduce numerical precision, and measure the resulting accuracy--latency trade-off.
+
+\section{Evaluation metrics}
+
+Each model and compression variant will be evaluated using the following metrics:
+
+\begin{itemize}
+    \item COCO mAP@[0.5:0.95] as the primary accuracy metric,
+    \item AP@0.5 as a more permissive detection-quality metric,
+    \item latency in milliseconds for batch size 1 and, where feasible, batch size 8,
+    \item parameters and model file size,
+    \item FLOPs or MACs, reported as a proxy metric rather than a replacement for measured latency,
+    \item peak GPU memory during inference,
+    \item optional power draw or energy per image from repeated benchmark windows.
+\end{itemize}
+
+Latency measurements will use warm-up iterations followed by repeated timed iterations with CUDA synchronisation. Results will be reported as median latency and, where possible, an interquartile range. This avoids over-interpreting single measurements affected by background processes or GPU clock changes.
+
+\section{Robustness extension}
+
+If the main matrix is completed early, a robustness extension can evaluate a subset of compressed detectors under controlled input degradations: Gaussian noise, blur, and JPEG compression. This extension is useful because quantisation and token reduction may change not only average accuracy, but also how quickly a detector degrades when image quality becomes worse.
+
+\section{Threats to validity}
+
+Several limitations must be documented. First, RF-DETR, Swin Mask R-CNN, and YOLO differ not only in backbone design, but also in detection heads, training recipes, input resolutions, and post-processing. Second, latency depends strongly on the inference runtime, exported graph, driver version, and operator support. Third, an RTX 3070 Ti is a useful local deployment proxy, but it is not the same as an embedded edge accelerator. For these reasons, conclusions should emphasise measured trade-offs under the stated protocol rather than universal claims about every deployment setting.
 
 
 % ------------------------------- BIBLIOGRAPHY ---------------------------
@@ -809,7 +922,7 @@ It then motivated \emph{frugal artificial intelligence} as a practical viewpoint
 % FOR AMBITIOUS ONES - USE BIBTEX
 
 \bibliographystyle{plain}
-\bibliography{../Ideas/refs}
+\bibliography{references}
 
 
 
