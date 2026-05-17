@@ -37,7 +37,12 @@ detectors = [
     "onnx>=1.16.0",
 ]
 export = [
+    "onnx>=1.16.0",
     "onnxruntime-gpu>=1.18.0",
+    "nvidia-ml-py>=12.535.133",
+]
+swin = [
+    "openmim>=0.3.9",
 ]
 dev = [
     "pytest>=7.0.0",

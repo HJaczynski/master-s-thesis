@@ -1,0 +1,82 @@
+data_yaml: configs/coco_local.yaml
+dataset_size: 500
+device: 0
+gpu_sample_interval_s: 1.0
+max_failures: 20
+allow_ultralytics_download: false
+
+tensorrt:
+  export_dir: exports/tensorrt
+  workspace_gb: 4
+  dynamic: false
+  verbose: false
+  calibration_fraction: 1.0
+  calibration_images: 500
+
+defaults:
+  output_dir: runs/nightly
+  resume: true
+  batch_sizes: [1]
+  variants: [fp32_baseline, fp16, int8_ptq]
+  runtimes:
+    ultralytics:
+      fp32_baseline: pytorch
+      fp16: pytorch
+      int8_ptq: tensorrt
+    rfdetr:
+      fp32_baseline: pytorch
+      fp16: pytorch
+      int8_ptq: pending_tensorrt
+      token_merge: pending_token_merge
+      token_merge_fp16: pending_token_merge
+      token_merge_int8_ptq: pending_token_merge_tensorrt
+      token_merge_int8_light_prune: pending_token_merge_prune_tensorrt
+    mmdetection:
+      fp32_baseline: pytorch
+      fp16: pytorch
+      int8_ptq: pending_tensorrt
+      token_merge: pending_token_merge
+      token_merge_fp16: pending_token_merge
+      token_merge_int8_ptq: pending_token_merge_tensorrt
+      token_merge_int8_light_prune: pending_token_merge_prune_tensorrt
+
+rfdetr:
+  score_threshold: 0.001
+  optimize_for_inference: true
+  compile: false
+
+profiles:
+  smoke:
+    output_dir: runs/smoke
+    max_images: 64
+    models: [rfdetr_medium, swin_t_mask_rcnn, yolo_v8s, yolo26s]
+    variants: [fp32_baseline, fp16]
+    batch_sizes: [1]
+
+  overnight:
+    output_dir: runs/overnight
+    max_images:
+    models: [rfdetr_medium, swin_t_mask_rcnn, yolo_v8s, yolo_v8m, yolo26s, yolo26m]
+    variants: [fp32_baseline, fp16, int8_ptq]
+    batch_sizes: [1]
+
+  transformer_core:
+    output_dir: runs/transformer_core
+    max_images:
+    models: [rfdetr_medium, swin_t_mask_rcnn]
+    variants: [fp32_baseline, fp16, int8_ptq, token_merge, token_merge_int8_ptq]
+    batch_sizes: [1]
+
+  yolo26_full:
+    output_dir: runs/yolo26_full
+    max_images:
+    models: [yolo26n, yolo26s, yolo26m, yolo26l, yolo26x]
+    variants: [fp32_baseline, fp16, int8_ptq]
+    batch_sizes: [1]
+
+  throughput:
+    output_dir: runs/throughput
+    max_images:
+    models: [yolo_v8s, yolo26s, yolo26m]
+    variants: [fp32_baseline, fp16]
+    batch_sizes: [1, 8]

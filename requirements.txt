@@ -14,10 +14,16 @@ tqdm>=4.66.0
 rfdetr>=1.6.0
 ultralytics>=8.4.0
 onnx>=1.16.0
+nvidia-ml-py>=12.535.133
 
 # Optional export/runtime dependency. TensorRT support may require a separate
 # NVIDIA install matching the local CUDA and driver stack.
 # onnxruntime-gpu>=1.18.0
+# tensorrt --extra-index-url https://pypi.nvidia.com
+
+# Optional Swin/MMDetection stack. Prefer scripts/install_swin_mmdetection.ps1
+# because mmcv/mmdet wheels are CUDA/PyTorch-version sensitive.
+# openmim>=0.3.9
 
 # Development dependencies (optional)
 pytest>=7.0.0

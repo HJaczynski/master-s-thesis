@@ -9,12 +9,16 @@ __pycache__/
 #models
 *.pt
 *.pth
+*.onnx
+*.engine
+*.cache
 
 # Local experiment data and generated artifacts
 data/
 checkpoints/
 artifacts/
 exports/
+runs/
 results/raw/
 results/*.csv
 results/*.json

@@ -7,11 +7,14 @@ from typing import Any
 from .config import load_yaml
 
 RESULT_COLUMNS = [
+    "status",
     "run_id",
     "model_id",
     "family",
     "variant_id",
     "precision",
+    "model_priority",
+    "variant_priority",
     "batch_size",
     "dataset_split",
     "num_images",
@@ -29,9 +32,18 @@ RESULT_COLUMNS = [
     "peak_gpu_memory_mb",
     "power_watts",
     "energy_j_per_image",
+    "gpu_memory_peak_mb",
+    "gpu_utilization_avg_pct",
+    "gpu_temperature_max_c",
     "runtime",
+    "artifact_path",
+    "raw_metrics_path",
+    "started_at",
+    "ended_at",
+    "duration_s",
     "commit",
     "notes",
+    "error",
 ]
 
 
