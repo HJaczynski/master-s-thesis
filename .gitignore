@@ -118,6 +118,7 @@ Latex/**
 !Latex/**/*.[wW][eE][bB][pP]
 !Latex/**/*.[tT][tT][fF]
 !Latex/**/*.[oO][tT][fF]
+Latex/**/previews/
 Latex/**/*-blx.bib
 Latex/**/.DS_Store
 
