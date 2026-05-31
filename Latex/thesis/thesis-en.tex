@@ -324,42 +324,6 @@ Neural networks are inspired by the way biological nervous systems process infor
 
 As computing power and training methods improved, neural networks evolved into many specialised families. Examples include recurrent neural networks (RNNs) for sequential data \cite{Hochreiter1997LSTM}, convolutional neural networks (CNNs) for images \cite{LeCun1998GradientBased}, generative adversarial networks (GANs) for data generation \cite{Goodfellow2014GAN}, and transformer-based models, which currently dominate many state-of-the-art results in both vision and language tasks \cite{Vaswani2017Attention}.
 
-% \subsection{Perceptron}
-% The perceptron is one of the simplest trainable neural network models \cite{Rosenblatt1958Perceptron}. It can be viewed as a single neuron that performs a weighted sum of its input features and then applies a decision function to produce a binary output. Given an input vector
-% \[
-% \mathbf{x} = [x_1, x_2, \dots, x_d]^T,
-% \]
-% The perceptron computes an activation value
-% \[
-% z = \mathbf{w}^T\mathbf{x} + b,
-% \]
-% where $\mathbf{w} = [w_1, w_2, \dots, w_d]^T$ is a vector of weights and $b$ is a bias term. The final prediction is obtained by applying a threshold function, most commonly the Heaviside step function:
-% \[
-% \hat{y} =
-% \begin{cases}
-% 1, & \text{if } z \ge 0,\\
-% 0, & \text{otherwise.}
-% \end{cases}
-% \]
-
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.8\linewidth]{Perceptron_moj.png}
-%     \caption{Perceptron visualisation (reproduced from \cite{wikipedia_perceptron_pl}) (CC BY-SA 3.0).}
-%     \label{fig:perceptron}
-% \end{figure}
-
-
-% A key feature of the perceptron is that its parameters can be learned from labelled examples \cite{Rosenblatt1958Perceptron}. For a training example $(\mathbf{x}, y)$, where $y \in \{0,1\}$ is the target label and $\hat{y}$ is the model prediction, the perceptron learning rule updates the weights as
-% \[
-% \mathbf{w} \leftarrow \mathbf{w} + \eta (y - \hat{y}) \mathbf{x}, \qquad
-% b \leftarrow b + \eta (y - \hat{y}),
-% \]
-% where $\eta > 0$ is the learning rate. Intuitively, if the perceptron makes a mistake, the update shifts the decision boundary so that the current example becomes more likely to be classified correctly.
-
-% Geometrically, the perceptron learns a linear decision boundary (a hyperplane) that separates two classes in the input space \cite{Rosenblatt1958Perceptron}. This makes it effective for \emph{linearly separable} problems. However, a single perceptron cannot solve problems that are not linearly separable, such as the classic XOR example \cite{MinskyPapert1969Perceptrons}. This limitation motivated the development of multi-layer networks, where multiple neurons are composed into deeper architectures capable of representing more complex, non-linear decision functions \cite{MinskyPapert1969Perceptrons}.
-
-
 
 \subsection{Training neural networks}
 Training a neural network means finding parameter values (weights and biases) that minimise a chosen objective function \cite{LeCun2015DeepLearning}. In supervised learning, this objective typically measures the discrepancy between the model predictions and the ground-truth labels. Let a model with parameters $\theta$ produce predictions $f(\mathbf{x};\theta)$ for an input $\mathbf{x}$. Given a dataset $\mathcal{D}=\{(\mathbf{x}_i,y_i)\}_{i=1}^{N}$ and a loss function $\ell(\cdot)$, the learning problem is commonly written as
@@ -557,6 +521,42 @@ n = \frac{HW}{P^2}
 patches. Each patch is flattened and mapped into a $d$-dimensional embedding space. Because transformers have no inherent notion of token order, learnable \emph{positional embeddings} are added to encode patch locations \cite{Dosovitskiy2020ViT}. The resulting sequence is then processed by a standard transformer encoder stack \cite{Dosovitskiy2020ViT}.
 
 ViTs have demonstrated strong performance, particularly when trained on large datasets, and are utilised in many modern vision systems \cite{Dosovitskiy2020ViT}. However, the quadratic cost of attention with respect to the number of patches means that high-resolution inputs can be computationally expensive \cite{Vaswani2017Attention}. As a result, many practical vision transformer variants introduce efficiency improvements, such as hierarchical token representations, local or windowed attention, and reduced token counts \cite{Liu2021Swin}. These considerations are directly relevant to edge deployment, where input resolution and model size strongly affect latency and energy consumption \cite{Sze2017EfficientProcessing}.
+
+
+\section{Object detection architectures considered in this work}
+Object detection extends image classification by requiring both class prediction and spatial localisation. Modern detectors therefore differ not only in the feature extractor used to represent an image, but also in the way they assign predictions to objects, decode bounding boxes, and perform post-processing. Since these design choices influence both accuracy and runtime, this thesis compares detector families rather than isolated backbones.
+
+\subsection{YOLO-style one-stage detectors}
+YOLO introduced a one-stage formulation in which object classes and bounding boxes are predicted directly from an image in a single forward pass \cite{Redmon2016YOLO}. This idea is attractive for real-time deployment because it avoids the separate region-proposal stage used by two-stage detectors such as Faster R-CNN \cite{Ren2015FasterRCNN}. Later YOLO implementations improved the training recipe, feature aggregation, anchor handling, loss functions, export tooling, and hardware deployment support. In this thesis, YOLOv8 is used as a mature Ultralytics baseline, while YOLO26 is included as a newer comparison point intended to represent the current direction of deployment-oriented YOLO models \cite{UltralyticsYOLOv8, UltralyticsYOLO26}.
+
+\subsection{Detection transformers and RF-DETR}
+DETR-style models formulate object detection as a set prediction problem, replacing many hand-designed post-processing components with transformer attention and learned object queries. This family is conceptually important because it connects object detection with the broader success of transformer architectures in vision and language \cite{Vaswani2017Attention, Dosovitskiy2020ViT}. RF-DETR is especially relevant for this thesis because it targets the real-time part of the design space: instead of only maximising accuracy, it searches for accuracy--latency Pareto-efficient detection transformer variants and provides COCO-pretrained checkpoints suitable for practical evaluation \cite{Robinson2025RFDETR}. It therefore serves as the main transformer detector baseline in the experimental part.
+
+\subsection{Swin Transformer detectors}
+Swin Transformer addresses a key limitation of plain ViTs for dense vision tasks: global attention over all image patches becomes expensive at high resolution. Swin uses a hierarchical representation and shifted local windows, which reduces attention cost while still allowing information to move across neighbouring windows \cite{Liu2021Swin}. This makes it suitable for object detection and segmentation, where multi-scale spatial features are important. In this thesis, a Swin-T Mask R-CNN detector is treated as the hierarchical vision-transformer representative. It is not expected to be the fastest model, but it provides a useful contrast to both RF-DETR and YOLO: it combines transformer-style feature extraction with a conventional detection framework.
+
+
+\section{Token reduction for vision transformers}
+
+Token reduction is an efficiency direction specific to transformer-style models. In a vision transformer, an image is represented as a sequence of patch tokens. Since self-attention compares tokens with one another, reducing the number of tokens can lower both computation and memory use, especially in deeper layers where the representation is already semantically richer \cite{Vaswani2017Attention, Dosovitskiy2020ViT}. This makes token reduction complementary to quantisation and pruning: quantisation reduces numerical precision, pruning removes model structures or parameters, while token reduction reduces the amount of intermediate representation processed during inference.
+
+\subsection{Token pruning and token merging}
+
+Token-reduction methods can be broadly divided into token pruning and token merging. Token pruning removes tokens judged to be less important, for example background patches or low-saliency regions. This can be efficient, but it risks discarding information that later layers might need. Token merging instead combines similar or redundant tokens into fewer representative tokens. This may preserve more information than hard removal because the merged token still carries a fused representation of the original tokens.
+
+Token Merging (ToMe) is a representative training-free approach that merges similar tokens inside ViT models to reduce inference cost without retraining the full network \cite{Bolya2023ToMe}. Its appeal for this thesis is practical: it suggests that token reduction can be evaluated as an inference-time modification before committing to expensive fine-tuning. More recent methods such as MaMe and MPM further explore how token pairs or groups should be selected and fused \cite{MaMe2026, MPM2026}. Although these works are not yet standard deployment tools for object detection, they provide useful design ideas for reducing token count in RF-DETR and Swin-style detectors.
+
+\subsection{Why detection is harder than classification}
+
+Applying token reduction to object detection is more difficult than applying it to image classification. A classifier only needs enough information to predict one or more image-level labels. A detector must also localise objects, preserve small-object evidence, and maintain spatial detail across the feature hierarchy. Removing or merging tokens too aggressively may therefore hurt bounding-box quality even if the main object category remains recognisable.
+
+This is particularly important for COCO, where many images contain multiple objects at different scales. Background-looking tokens may still provide context, and small objects may occupy only a few patches. For this reason, token reduction for detection should start conservatively: lower merge ratios, later-layer merging, and careful measurement of AP for small, medium, and large objects. The final evaluation should not only report global mAP, but also check whether small-object AP degrades disproportionately.
+
+\subsection{Relation to RF-DETR and Swin}
+
+RF-DETR and Swin provide two different settings for token reduction. In RF-DETR, token reduction can be inserted in the encoder before object queries attend to image features. The challenge is to reduce redundant image tokens without weakening the decoder's ability to identify object locations. In Swin, token reduction must respect the hierarchical windowed structure. A merge applied inside local windows is easier to align with Swin's attention pattern, while merging across windows may reduce more redundancy but risks disturbing the shifted-window design \cite{Liu2021Swin}.
+
+For this thesis, token reduction is therefore treated as a planned transformer-specific compression axis rather than as a completed result. The initial implementation should use a simple ToMe-like or MaMe/MPM-inspired merging step, measure its isolated effect, and only then combine it with FP16 or INT8. This order is important because token reduction changes the representation itself, while quantisation changes numerical precision. Evaluating them separately makes the source of any accuracy loss easier to identify.
 
 
 \section{Frugal artificial intelligence}
@@ -811,6 +811,14 @@ It then motivated \emph{frugal artificial intelligence} as a practical viewpoint
 
 This chapter defines the experimental plan used to compare model compression strategies for object detection. The central idea is to evaluate a small but representative set of COCO-trained detectors under a shared protocol, then measure how accuracy and runtime change after applying progressively stronger efficiency methods. The study uses COCO because it is a standard object detection benchmark with established evaluation metrics and public checkpoints \cite{Lin2014COCO}.
 
+\section{Research objective and validation logic}
+
+The operational research objective is to determine how different object detector families respond to practical compression methods when they are evaluated under the same COCO-oriented deployment protocol. More precisely, the thesis asks whether transformer-based detectors, hierarchical vision transformers, and YOLO-style convolutional detectors show different accuracy--latency--energy trade-offs after FP16 inference, INT8 post-training quantisation, token reduction, and light structured pruning.
+
+The validation logic has four stages. First, a published COCO checkpoint is evaluated without compression to establish an accuracy and latency baseline. Second, a low-risk precision change (FP16) is measured to check whether the detector is numerically stable under reduced precision. Third, an INT8 deployment path is tested with calibration data and a real inference backend. Fourth, architecture-specific compression is added: token reduction for transformer-style detectors and structured pruning for YOLO-style detectors when the software stack is stable enough.
+
+A compressed model is considered useful only if its accuracy loss is justified by a measurable deployment benefit. Therefore, the methodology does not optimise mAP alone. It compares mAP@0.5:0.95, AP@0.5, median latency, throughput, memory use, and approximate energy per image. The resulting evaluation is intended to identify Pareto-favourable configurations rather than a single universally best detector.
+
 \section{Hardware and practical scope}
 
 The local experimental device is an NVIDIA GeForce RTX 3070 Ti with 8 GB of GPU memory. This hardware is powerful enough for inference benchmarking, export experiments, calibration, and short fine-tuning runs, but it is not appropriate for training large COCO detectors from scratch. Therefore, the experimental scope is deliberately focused on:
@@ -824,6 +832,71 @@ The local experimental device is an NVIDIA GeForce RTX 3070 Ti with 8 GB of GPU 
 \end{itemize}
 
 Batch size 1 is the primary latency setting because it corresponds to real-time camera-like inference. Batch size 8 is treated as a secondary throughput setting and may be skipped for the largest variants if memory usage becomes unstable.
+
+\section{Current implementation stage}
+
+The full methodology is broader than the set of measurements already completed. At the current stage, the implemented pipeline covers:
+
+\begin{itemize}
+    \item RF-DETR Medium FP32 and FP16 evaluation on the full COCO 2017 validation set,
+    \item YOLOv8 and YOLO26 FP32/FP16 inference on the COCO validation split,
+    \item YOLOv8 and YOLO26 INT8 post-training quantisation through TensorRT engines,
+    \item telemetry collection for latency, throughput, power, energy per image, GPU memory, utilisation, and temperature.
+\end{itemize}
+
+The remaining planned work includes Swin-T Mask R-CNN evaluation, RF-DETR INT8 export, transformer token-reduction experiments, and pruning experiments. These components require a more stable Linux-based environment because the OpenMMLab and TensorRT stacks are sensitive to Python, CUDA, PyTorch, and TensorRT versions. For this reason, the results chapter separates completed measurements from planned extensions instead of presenting the whole matrix as finished.
+
+\section{Dataset preparation and calibration protocol}
+
+The evaluation dataset is COCO 2017 validation. The full validation split contains 5000 images, which is used when the model/runtime combination is stable enough for unattended evaluation. For faster iteration, a 500-image validation subset is also used. This subset is not a replacement for the final COCO evaluation, but it is useful for checking whether an export path works, whether labels are mapped correctly, and whether a compression method causes an obvious accuracy collapse.
+
+For YOLO-family models, COCO annotations are converted to the label format expected by the Ultralytics validation pipeline. The conversion preserves COCO category order and writes one text file per image. In addition to the validation subset, a representative calibration subset is prepared for INT8 post-training quantisation. The calibration images are passed through the network during TensorRT export so that activation ranges can be estimated before the final INT8 engine is built. The calibration subset is deliberately drawn from the same data distribution as the validation images, because PTQ quality depends strongly on whether the calibration inputs represent the real inference workload.
+
+\section{Benchmarking workflow}
+
+Each experiment row is represented by a tuple containing the model identifier, precision or compression variant, runtime backend, batch size, dataset split, and image count. The benchmark runner records both the numeric result and the raw metric file for later inspection. A completed row therefore contains at least:
+
+\begin{itemize}
+    \item model family and checkpoint identifier,
+    \item precision variant (FP32, FP16, INT8 PTQ),
+    \item runtime backend (PyTorch, TensorRT, or pending backend),
+    \item number of evaluated images,
+    \item COCO mAP metrics,
+    \item latency, throughput, GPU memory, power, and energy fields when available,
+    \item path to the model artifact or exported engine.
+\end{itemize}
+
+This row-based design is intentionally simple. It allows partial overnight runs to remain useful even if a later model fails to export or a dependency stack breaks. Failed and skipped rows are kept in the summary file with an explanatory message, which is important for reproducibility because deployment failures are themselves part of the practical evaluation.
+
+\section{Solution architecture and implementation environment}
+
+The experimental implementation is organised as a benchmarking pipeline rather than as a single monolithic script. The pipeline contains five main components:
+
+\begin{itemize}
+    \item a data layer that stores COCO images, annotations, converted YOLO labels, and calibration subsets,
+    \item model adapters for RF-DETR, YOLO/YOLO26, and the planned MMDetection Swin detector,
+    \item an export layer for precision conversion and deployment artifacts such as TensorRT engines and ONNX models,
+    \item a benchmark runner that executes each experiment row and records accuracy, latency, and telemetry,
+    \item an aggregation layer that writes summary CSV files and presentation/thesis plots.
+\end{itemize}
+
+Most implementation code is written in Python because the relevant model and deployment libraries expose Python APIs. The current pipeline uses PyTorch for baseline inference, the Ultralytics package for YOLO-family checkpoints and validation, the RF-DETR package for the transformer-detector baseline, TensorRT for deployment-oriented INT8 engines, pycocotools for COCO metrics and annotation handling, and NVIDIA tooling such as NVML/\texttt{nvidia-smi} for GPU telemetry. PowerShell scripts are used only for local orchestration on Windows; the final full experiment environment is planned for Linux because OpenMMLab, MMCV, MMDetection, MMDeploy, CUDA, and TensorRT are substantially easier to align there.
+
+Existing components are reused wherever possible: published checkpoints, official validation procedures, and standard COCO metrics are preferred over custom reimplementations. The new contribution of the implementation is the unified comparison workflow around those components: consistent experiment rows, calibration handling, telemetry capture, failure logging, and result aggregation across detector families.
+
+\section{Runtime and export backends}
+
+The FP32 and FP16 rows are evaluated with PyTorch unless stated otherwise. FP16 is enabled as a low-risk precision reduction because it does not require calibration and is widely supported on NVIDIA GPUs. However, FP16 speedups are not guaranteed: some models are limited by memory movement, post-processing, Python overhead, or operators that do not benefit much from half precision.
+
+INT8 rows are treated as deployment measurements rather than only numerical-format conversions. For the YOLO-family results, INT8 PTQ uses TensorRT engine export. This matters because TensorRT performs graph optimisation, operator fusion, calibration, and engine generation, so the measured latency reflects the deployment runtime rather than raw PyTorch execution. The comparison between FP32/FP16 PyTorch and INT8 TensorRT is therefore a practical deployment comparison, not a pure isolated precision comparison.
+
+For RF-DETR and Swin, the intended final path is similar in spirit but more involved. RF-DETR requires a reliable ONNX/TensorRT export path for the transformer detector and its post-processing. Swin-T Mask R-CNN is planned through the OpenMMLab/MMDetection ecosystem, with deployment through MMDeploy or ONNX/TensorRT where feasible. These paths are postponed to the final environment because earlier Windows and Colab attempts showed sensitivity to CUDA, PyTorch, MMCV, and TensorRT versions.
+
+\section{Telemetry collection}
+
+Accuracy alone is insufficient for this thesis because a detector with strong mAP can still be impractical if it is slow or energy-intensive. Therefore, the benchmark records deployment-oriented quantities alongside COCO metrics. Median latency is the main timing metric for batch-size-1 inference. Throughput is computed from latency when appropriate. GPU power, utilisation, temperature, and memory are sampled during the run using NVIDIA tooling where available. Energy per image is estimated from the observed power and throughput window.
+
+These telemetry values should be interpreted as approximate but useful. They depend on driver version, GPU clocks, cooling, background processes, and runtime implementation. Nevertheless, they reveal effects that FLOPs alone cannot capture, such as the difference between a PyTorch model and an optimised TensorRT engine.
 
 \section{Candidate detector families}
 
@@ -860,6 +933,8 @@ The initial token-reduction setting should be conservative: one mid-network merg
 \subsection{Quantisation}
 
 The quantisation comparison includes FP32, FP16, and INT8 post-training quantisation. FP16 measures the benefit of using tensor-core-friendly reduced precision. INT8 PTQ requires calibration on a representative COCO subset before evaluating on the validation set. Quantisation-aware training is reserved as an optional extension for one model family if PTQ produces a large accuracy loss.
+
+In the implemented YOLO pipeline, INT8 PTQ is performed by exporting TensorRT engines calibrated on COCO validation images. This is the main deployment-oriented INT8 path because it measures the runtime that would actually be used for accelerated inference. ONNX Runtime INT8 quantisation was also prepared as a fallback for producing quantised ONNX models, but it is treated separately from TensorRT because CPU ONNX Runtime latency is not directly comparable with GPU TensorRT latency.
 
 \subsection{Structured pruning}
 
@@ -915,6 +990,161 @@ If the main matrix is completed early, a robustness extension can evaluate a sub
 \section{Threats to validity}
 
 Several limitations must be documented. First, RF-DETR, Swin Mask R-CNN, and YOLO differ not only in backbone design, but also in detection heads, training recipes, input resolutions, and post-processing. Second, latency depends strongly on the inference runtime, exported graph, driver version, and operator support. Third, an RTX 3070 Ti is a useful local deployment proxy, but it is not the same as an embedded edge accelerator. For these reasons, conclusions should emphasise measured trade-offs under the stated protocol rather than universal claims about every deployment setting.
+\chapter{Preliminary results}
+
+This chapter reports the measurements completed so far. The results are preliminary: they validate the benchmarking and export workflow, but they do not yet cover the full final matrix described in Chapter~3. The reported RF-DETR, YOLOv8, and YOLO26 accuracy values are presented as COCO 2017 validation measurements on the full 5000-image validation split. A separate 500-image subset is used for INT8 calibration and rapid smoke tests, but it is not the basis of the reported mAP values in the main result tables.
+
+\section{Completed experiment scope}
+
+The completed measurements cover two parts of the planned comparison. First, RF-DETR Medium was evaluated in FP32 and FP16 precision using the PyTorch runtime on the full COCO validation set. Second, YOLOv8s, YOLOv8m, YOLO26s, and YOLO26m were evaluated in FP32, FP16, and INT8 TensorRT precision with the same COCO validation target. The Swin-T Mask R-CNN part of the matrix and transformer-specific token-reduction experiments remain planned work.
+
+The reported latency is median per-image latency at batch size 1. For the YOLO INT8 rows, the runtime is TensorRT and the engines were produced through post-training quantisation with a COCO calibration subset. The raw result artifacts are retained under the project \texttt{runs/} directory together with exported model artifacts and plot files used in the presentation.
+
+\section{Data used in the preliminary experiments}
+
+The preliminary experiments use the COCO 2017 validation split. The full validation set contains 5000 images and an annotation file in JSON format. Each image entry contains fields such as image identifier, file name, width, and height. Each object annotation contains an image identifier, category identifier, bounding box, segmentation metadata, object area, and an \texttt{iscrowd} flag. The most important numeric fields for this thesis are the bounding boxes and category identifiers, because they are used to compute COCO mAP and AP@0.5.
+
+For YOLO-family validation, the COCO annotations are transformed into the Ultralytics label format. In this format, each image has a corresponding text file containing class identifiers and normalised bounding boxes. The transformation changes the representation of the labels but not the evaluation target: the model is still evaluated against COCO object categories. The benchmark also creates a smaller calibration subset for INT8 PTQ. Calibration images are used only to estimate activation ranges during export; they are not treated as training data and are not used to report final accuracy.
+
+No detector is trained from scratch in the preliminary stage. The models use published COCO-trained checkpoints, so the COCO training split is part of the original checkpoint training process rather than part of the local experiment. Locally, the validation split is used in two ways: the full 5000-image set for the reported accuracy measurements, and a 500-image subset for calibration or rapid export checks. This distinction matters because the calibration subset is an implementation input for INT8 PTQ, while the full validation split is the benchmark target for reported mAP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\linewidth]{../DiplomaSeminar2_Presentation2/assets/ap_latency_scatter.pdf}
+    \caption{Accuracy--latency overview of the completed preliminary measurements. Accuracy values are reported against the COCO 2017 validation target; the separate 500-image subset is used for INT8 calibration and smoke tests, not as the main accuracy benchmark.}
+    \label{fig:prelim_ap_latency_scatter}
+\end{figure}
+
+Figure~\ref{fig:prelim_ap_latency_scatter} summarises the current state of the experiment matrix. The RF-DETR points occupy the high-accuracy but higher-latency region. YOLO and YOLO26 points occupy the lower-latency region, especially after TensorRT INT8 export. The figure also shows why a single metric is insufficient: RF-DETR is currently the strongest measured detector in accuracy, while several YOLO-family INT8 engines are much faster at the cost of lower mAP.
+
+\section{RF-DETR baseline}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\hline
+Model & Precision & Images & mAP@0.5:0.95 [\%] & AP@0.5 [\%] & Latency [ms] \\
+\hline
+RF-DETR Medium & FP32 & 5000 & 54.76 & 73.63 & 24.97 \\
+RF-DETR Medium & FP16 & 5000 & 54.68 & 73.66 & 23.81 \\
+\hline
+\end{tabular}
+\caption{Preliminary RF-DETR Medium results on the full COCO 2017 validation set.}
+\label{tab:prelim_rfdetr}
+\end{table}
+
+The RF-DETR Medium baseline achieved the highest accuracy among the completed measurements, reaching 54.76\% mAP@0.5:0.95 in FP32. Switching to FP16 caused almost no accuracy loss: the measured mAP changed by less than 0.1 percentage point. The latency improvement was modest, from 24.97 ms to 23.81 ms per image. This suggests that, in the current PyTorch path, RF-DETR is not yet strongly accelerated by FP16 alone. A more deployment-oriented conclusion will require TensorRT or another optimised inference backend.
+
+The small difference between FP32 and FP16 is still useful. It suggests that the RF-DETR checkpoint itself is numerically stable under half precision. Therefore, future work can focus on export and runtime optimisation rather than first solving a basic precision-stability problem. The next RF-DETR experiments should prioritise ONNX/TensorRT export, INT8 calibration, and then token reduction in the encoder.
+
+\section{YOLO and YOLO26 precision comparison}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\begin{tabular}{llrrrrr}
+\hline
+Model & Precision/runtime & Images & mAP@0.5:0.95 [\%] & AP@0.5 [\%] & Latency [ms] & Speedup vs FP32 \\
+\hline
+YOLOv8s & FP32/PyTorch & 5000 & 44.40 & 61.05 & 6.34 & 1.00 \\
+YOLOv8s & FP16/PyTorch & 5000 & 44.35 & 61.06 & 5.87 & 1.08 \\
+YOLOv8s & INT8/TensorRT & 5000 & 42.57 & 59.05 & 3.19 & 1.99 \\
+\hline
+YOLOv8m & FP32/PyTorch & 5000 & 49.79 & 66.55 & 9.86 & 1.00 \\
+YOLOv8m & FP16/PyTorch & 5000 & 49.73 & 66.53 & 7.78 & 1.27 \\
+YOLOv8m & INT8/TensorRT & 5000 & 48.57 & 65.25 & 3.35 & 2.94 \\
+\hline
+YOLO26s & FP32/PyTorch & 5000 & 47.17 & 63.85 & 6.95 & 1.00 \\
+YOLO26s & FP16/PyTorch & 5000 & 47.17 & 63.85 & 11.15 & 0.62 \\
+YOLO26s & INT8/TensorRT & 5000 & 42.71 & 59.39 & 2.20 & 3.16 \\
+\hline
+YOLO26m & FP32/PyTorch & 5000 & 51.80 & 69.06 & 8.76 & 1.00 \\
+YOLO26m & FP16/PyTorch & 5000 & 51.79 & 69.06 & 8.84 & 0.99 \\
+YOLO26m & INT8/TensorRT & 5000 & 47.82 & 65.98 & 2.68 & 3.26 \\
+\hline
+\end{tabular}
+\caption{Preliminary YOLO and YOLO26 results on the COCO 2017 validation target.}
+\label{tab:prelim_yolo_precision}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\linewidth]{../DiplomaSeminar2_Presentation2/assets/yolo_latency_by_precision.pdf}
+    \caption{Median batch-size-1 latency for YOLO-family models under FP32, FP16, and TensorRT INT8.}
+    \label{fig:yolo_latency_by_precision}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\linewidth]{../DiplomaSeminar2_Presentation2/assets/yolo_ap_by_precision.pdf}
+    \caption{Detection quality for YOLO-family models under precision changes on the COCO 2017 validation target.}
+    \label{fig:yolo_ap_by_precision}
+\end{figure}
+
+The YOLO-family results show the expected trade-off between accuracy and speed for INT8 TensorRT inference. YOLOv8m lost 1.22 percentage points of mAP compared with FP32 while improving median latency from 9.86 ms to 3.35 ms, which corresponds to a 2.94$\times$ speedup. YOLOv8s showed a similar pattern: INT8 reduced mAP by 1.83 percentage points and almost doubled speed relative to FP32.
+
+YOLO26 produced the strongest FP32 accuracy among the YOLO-family rows. YOLO26m reached 51.80\% mAP, compared with 49.79\% for YOLOv8m. Its INT8 TensorRT version was also fast, reaching 2.68 ms per image, but the accuracy drop was larger than for YOLOv8m. YOLO26s was the fastest INT8 model in the current measurements at 2.20 ms per image, but it also showed a larger mAP reduction after INT8 quantisation. These results suggest that the newer YOLO26 models are promising for latency, but their PTQ behaviour should be investigated more carefully with repeated full-validation runs and, if time permits, quantisation-aware training.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\linewidth]{../DiplomaSeminar2_Presentation2/assets/int8_speed_accuracy_tradeoff.pdf}
+    \caption{INT8 TensorRT speedup relative to FP32 versus mAP loss for YOLO-family models. Lower and further right is preferable: more speedup with less accuracy loss.}
+    \label{fig:int8_speed_accuracy_tradeoff}
+\end{figure}
+
+Figure~\ref{fig:yolo_latency_by_precision} shows that TensorRT INT8 consistently provides the largest latency reduction among the completed YOLO experiments. The FP16 results are less uniform. YOLOv8s and YOLOv8m become faster under FP16, but YOLO26s becomes slower and YOLO26m remains almost unchanged. This indicates that simply enabling half precision is not enough to guarantee speedup; the model architecture, post-processing path, and runtime implementation still determine the measured latency. The YOLO26s latency regression under FP16 is especially important: latency increases from 6.95 ms in FP32 to 11.15 ms in FP16. This suggests that an architectural layer, activation format, or post-processing path may lack an optimised half-precision kernel, or may trigger an inefficient fallback in the Windows PyTorch environment. The observation supports the use of deployment frameworks such as TensorRT when speedups must be guaranteed rather than assumed.
+
+Figure~\ref{fig:yolo_ap_by_precision} shows a different pattern for accuracy. FP16 preserves mAP almost exactly for all tested YOLO-family models, whereas INT8 PTQ introduces a visible accuracy drop. The magnitude of this drop differs by model: the YOLOv8 models lose less mAP than the YOLO26 models in the current result set. Figure~\ref{fig:int8_speed_accuracy_tradeoff} makes this trade-off explicit. YOLOv8m is currently the most balanced INT8 point among the tested models, because it gains nearly a 3$\times$ speedup with only about 1.2 percentage points of mAP loss. YOLO26m and YOLO26s are faster in INT8, but they pay a larger accuracy cost.
+
+\section{Energy and deployment observations}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{llrrr}
+\hline
+Model & Precision/runtime & Latency [ms] & Power [W] & Energy [J/image] \\
+\hline
+RF-DETR Medium & FP32/PyTorch & 24.97 & 136.93 & 4.29 \\
+RF-DETR Medium & FP16/PyTorch & 23.81 & 91.21 & 2.65 \\
+\hline
+YOLOv8m & FP32/PyTorch & 9.86 & 138.90 & 21.82 \\
+YOLOv8m & FP16/PyTorch & 7.78 & 124.08 & 16.24 \\
+YOLOv8m & INT8/TensorRT & 3.35 & 89.24 & 8.26 \\
+\hline
+YOLO26m & FP32/PyTorch & 8.76 & 142.30 & 20.05 \\
+YOLO26m & FP16/PyTorch & 8.84 & 116.83 & 16.47 \\
+YOLO26m & INT8/TensorRT & 2.68 & 89.09 & 7.72 \\
+\hline
+\end{tabular}
+\caption{Selected telemetry values from the preliminary runs. Energy estimates are approximate and depend on the sampled benchmark window.}
+\label{tab:prelim_energy}
+\end{table}
+
+The telemetry collected during the same runs also indicates that runtime choice can strongly affect energy per image. For example, YOLOv8m decreased from 21.82 J/image in FP32 PyTorch to 8.26 J/image in INT8 TensorRT, while YOLO26m decreased from 20.05 J/image to 7.72 J/image. RF-DETR also benefited from FP16 in energy terms, decreasing from 4.29 J/image to 2.65 J/image, even though its latency changed only slightly. This supports the thesis assumption that latency, energy, and accuracy should be measured together rather than inferred from FLOPs alone.
+
+One interesting observation is that lower latency and lower power can occur together when the runtime is better optimised. The TensorRT INT8 engines both reduce inference time and reduce measured power relative to PyTorch FP32 for the medium YOLO variants. This compounds the energy benefit. In contrast, FP16 sometimes reduces power without reducing latency much, as seen for YOLO26m. Such cases are still relevant for deployment because energy and thermal behaviour can matter even when latency is unchanged.
+
+\section{Implications for the next experimental stage}
+
+The preliminary results motivate three concrete next steps. First, YOLO-family experiments should be repeated in the final Linux environment to confirm that the observed INT8 accuracy drops and FP16 latency behaviour are stable across runs and software stacks. Second, RF-DETR should be exported to an optimised backend before conclusions are drawn about transformer detector latency. The PyTorch RF-DETR numbers are useful as a baseline, but they do not yet represent the best deployment path. Third, Swin-T Mask R-CNN should be added once the OpenMMLab stack is stable, because it is the missing hierarchical transformer point needed to complete the architectural comparison.
+
+The results also refine the compression plan. FP16 can be treated as a low-risk baseline because it preserves accuracy across the completed experiments. INT8 PTQ is more powerful but model-dependent: it provides large latency and energy gains, but the mAP loss can vary substantially. Token reduction and pruning should therefore be evaluated after stable FP32/FP16/INT8 baselines are available, otherwise it becomes difficult to attribute accuracy loss to a particular compression step.
+
+\section{Error sources and uncertainty}
+
+The main source of statistical uncertainty is not the validation target itself, but the small number of repeated timing runs and the evolving software environment. COCO mAP is reported against the validation target, while the 500-image subset is used for calibration and smoke testing. The full thesis evaluation should still repeat the YOLO and YOLO26 measurements in the final Linux environment and, where possible, report latency variation across repeated runs.
+
+There is also implementation uncertainty. The FP32 and FP16 results use PyTorch, while the INT8 results use TensorRT. This is appropriate for deployment evaluation, but it means that speedups reflect both lower numerical precision and backend optimisation. TensorRT version changes can also affect export success, layer fusion, calibration behaviour, and latency. This was already visible in the development process, where some INT8 export paths worked in one Colab/runtime configuration but failed in another.
+
+Energy measurements are approximate because they are derived from sampled GPU telemetry rather than from an external power meter. They are useful for comparing broad runtime trends, especially when the same machine and protocol are used, but they should not be interpreted as exact physical measurements. Finally, Swin and token-reduction results are not yet present, so architectural conclusions about hierarchical ViTs and token compression remain hypotheses until the final experiment matrix is completed.
+
+\section{Current limitations}
+
+The current results should be interpreted cautiously. Although the reported accuracy values are aligned to the COCO validation target, the FP16 and INT8 rows use different runtimes: FP16 measurements were PyTorch-based, whereas INT8 measurements used TensorRT engines. As a result, part of the observed speedup comes from the deployment runtime and graph optimisation, not only from lower numerical precision. The YOLO26s FP16 regression also shows that runtime-specific kernel support can dominate the expected benefit of reduced precision. Finally, Swin Transformer results are not yet included because the OpenMMLab stack was unstable in the available Windows/Colab environments. A Linux installation is planned for the final version of the experiments.
+
+\FloatBarrier
 
 
 % ------------------------------- BIBLIOGRAPHY ---------------------------
