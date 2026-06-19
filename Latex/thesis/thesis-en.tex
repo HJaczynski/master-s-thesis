@@ -233,22 +233,29 @@ Modele głębokiego uczenia się osiągają wysoką dokładność w zakresie wid
 
 
 %% --------------------------- DECLARATIONS ------------------------------------
-%
-%%
-%%	IT IS NECESSARY OT ATTACH FILLED-OUT AUTORSHIP DEECLRATION. SCAN (IN PDF FORMAT) NEEDS TO BE PLACED IN scans FOLDER AND IT SHOULD BE CALLED, FOR EXAMPLE, DECLARATION_OF_AUTORSHIP.PDF. IF THE FILENAME OR FILEPATH IS DIFFERENT, THE FILEPATH IN THE NEXT COMMAND HAS TO BE ADJUSTED ACCORDINGLY.
-%%
-%%	command attacging the declarations of autorship
-%%
-%\includepdf[pages=-]{scans/declaration-of-autorship}
-%\null\thispagestyle{empty}\newpage
-%
-%% optional declaration
-%%
-%%	command attaching the declaataration on granting a license
-%%
-%\includepdf[pages=-]{scans/declaration-on-granting-a-license}
-%%
-%%	.tex corresponding to the above PDF files are present in the 3. declarations folder 
+
+\section*{The use of IT tools in this thesis}
+\vspace{3pt}
+
+I hereby declare that:
+\begin{enumerate}
+    \item I have used IT tools to generate the content of the manuscript of this thesis.
+    \item I have used IT tools to generate the code of the software developed for the thesis.
+    \item I take full responsibility for all content in this thesis, including both the manuscript and the software developed for it.
+\end{enumerate}
+
+\vspace{6pt}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{0.48\textwidth}|p{0.48\textwidth}|}
+\hline
+\textbf{Scope of the use of IT tools to generate manuscript} &
+\textbf{Scope of the use of IT tools to generate software code} \\ \hline
+Paraphrasing the text written by me, language editing, grammar and stylistic improvements of the manuscript text, creation of mathematical formulas and tables &
+Preparation of scripts for installation of necessary dependencies that are required for running deep learning models locally. Code debugging when problems occured and generation of fixes\\ \hline
+\end{tabular}
+\end{table}
 %
 \null\thispagestyle{empty}\newpage
 % ------------------- TABLE OF CONTENTS ---------------------
@@ -256,7 +263,7 @@ Modele głębokiego uczenia się osiągają wysoką dokładność w zakresie wid
 \pagenumbering{gobble}
 \tableofcontents
 \thispagestyle{empty}
-\newpage % IF YOU HAVE EVEN QUANTITY OD PAGES OF TOC, THEN REMOVE IT OR ADD \null\newpage FOR DOUBLE BLANK PAGE BEFORE INTRODUCTION
+% IF YOU HAVE EVEN QUANTITY OD PAGES OF TOC, THEN REMOVE IT OR ADD \null\newpage FOR DOUBLE BLANK PAGE BEFORE INTRODUCTION
 
 
 % -------------------- THE BODY OF THE THESIS --------------------------------
