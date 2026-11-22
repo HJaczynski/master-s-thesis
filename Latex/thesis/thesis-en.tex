@@ -276,7 +276,7 @@ Preparation of scripts for installation of necessary dependencies that are requi
 \chapter{Introduction}
 \label{ch:introduction}
 
-Deep learning is used in many everyday technologies, especially in systems that analyse images and video \cite{LeCun2015DeepLearning}. The models behind these systems are improving quickly, but they are also becoming larger and more demanding to run. While powerful servers can handle such models, many real-world applications require the model to run directly on a small device, such as in cameras, robots, drones, or mobile systems \cite{Howard2017MobileNets}. These devices have limited computing power, memory and battery capacity, so a model that performs well on a workstation may be too slow, too large or too energy-intensive to be practical on the device \cite{Sze2017EfficientProcessing}.
+Deep learning is used in many everyday technologies, especially in systems that analyse images and video \cite{LeCun2015DeepLearning}. The models behind these systems are improving quickly, but they are also becoming larger and more demanding to run. While powerful servers can handle such models, many real-world applications require the model to run directly on a small device, such as those in cameras, robots, drones or mobile systems \cite{Howard2017MobileNets}. These devices have limited computing power, memory and battery capacity, so a model that performs well on a workstation may be too slow, too large or too energy-intensive to be practical on the device \cite{Sze2017EfficientProcessing}.
 
 For this reason, there is a growing need to make models lighter and faster while keeping their results as reliable as possible \cite{Cheng2017SurveyCompression}. In practice, this means balancing several factors: the model's accuracy, its prediction speed, the memory it requires, and the energy it consumes. The best balance depends on the intended use: a safety-critical system may prioritise accuracy, while a battery-powered device may prioritise speed and energy efficiency.
 
@@ -289,22 +289,22 @@ To address these challenges, researchers develop methods that reduce the computa
     \label{fig:edge_devices}
 \end{figure}
 
-None of these methods is without trade-offs. Each approach compromises some accuracy, training effort, or engineering complexity in favour of computational efficiency, and in secnarios where maximum accuracy is essential, a compressed model may offer no tangible advantage.
-Furthermore, in safety-critical applications such as medical or automotive systems, a compressed model must undergo the same strict validation as its baseline counterparts. 
+None of these methods is without trade-offs. Each approach compromises some accuracy, training effort, or engineering complexity in favour of computational efficiency, and in scenarios where maximum accuracy is essential, a compressed model may offer no tangible advantage.
+Furthermore, in safety-critical applications such as medical or automotive systems, a compressed model must undergo the same strict validation as its baseline counterpart.
 
 
 \section{Compress the model, or choose differently?}
 \label{sec:intro_problem}
 
-Practicioners seeking a faster object detector have alternatives to compression. The simplest
-approach is to select a more compact variant within the same family model since modern detector
-architectures are released in multiple sizes. Like in the examples of YOLO variants used
-across this thesis. \cite{UltralyticsYOLO11,UltralyticsYOLO26}. Another option is to modify
-the model execution parameters, such as the numerical precision, input resolution, and tensor dimensions. Standard numerical formats include 32-bit floating point (FP32), 16-bit brain floating point (BF16), and 8-bit integers (INT8). On a given CPU, however reduced precision
-accelerates inference only when supported by dedicated  hardware instructions, such as Vector Neural Network Instructions (VNNI) for 8-bit integer arithmetic or Advanced Matrix Extensions (AMX) for BF16 and INT8 matrix operations in modern Intel server processors. Figure~\ref{fig:intro_routes} summarises these three pathways toward a more computationally effiecient detector evaluated in this thesis. 
+Practitioners seeking a faster object detector have alternatives to compression. The simplest
+approach is to select a more compact variant within the same model family, since modern detector
+families are released in multiple sizes, as are the YOLO models used
+throughout this thesis \cite{UltralyticsYOLO11,UltralyticsYOLO26}. Another option is to change
+how the model is executed: its numerical precision, input resolution and aspect ratio. Standard numerical formats include 32-bit floating point (FP32), 16-bit brain floating point (BF16), and 8-bit integers (INT8). On a given CPU, however, reduced precision
+accelerates inference only when it is supported by dedicated hardware instructions, such as Vector Neural Network Instructions (VNNI) for 8-bit integer arithmetic or Advanced Matrix Extensions (AMX) for BF16 and INT8 matrix operations in modern Intel server processors. Figure~\ref{fig:intro_routes} summarises these three pathways toward a more computationally efficient detector evaluated in this thesis. 
 
 
-Compression methods, however, are typically evaluated solely against their parent models, deomonstrating improved inference speed at the cost of a minor drop in accuracy. This approach does not address whether a smaller dense variant from the same model family could acheve equivalent speed and accuracy. An analysis of 81 pruning studies revealed a lack of standardized benchmarks and metrics to a point where most pruning methods are incomparable \cite{Blalock2020StatePruning}. Another investigation found that for the structured pruning methods examined, training the resulitng pruned architecture from sratch yielded comparable or superior accuracy relative to fine-tining the pruned weights, prompting the authors to advocate for more rigorous baselines \cite{Liu2019RethinkingPruning}. Finally, computional savings are frequently reported in terms of reduces parameter counts or floating-point operaiton rather than actual latency on target hardware, even though these metrics can diverge significantly \cite{Sze2017EfficientProcessing}.
+Compression methods, however, are typically evaluated against their parent models, demonstrating improved inference speed at the cost of a minor drop in accuracy. This approach does not address whether a smaller dense variant from the same model family could achieve equivalent speed and accuracy. An analysis of 81 pruning studies revealed a lack of standardised benchmarks and metrics, to a point where pruning methods are difficult to compare with one another \cite{Blalock2020StatePruning}. Another investigation found that for the structured pruning methods examined, training the resulting pruned architecture from scratch yielded comparable or superior accuracy relative to fine-tuning the pruned weights, prompting the authors to advocate for more rigorous baselines \cite{Liu2019RethinkingPruning}. Finally, computational savings are frequently reported in terms of reduced parameter counts or floating-point operations rather than actual latency on target hardware, even though these metrics can diverge significantly \cite{Sze2017EfficientProcessing}.
 
 
 This thesis therefore treats right-sizing (choosing a smaller dense model) and deployment settings (number format, input size and input shape) as the baselines that any compression method has to beat. All of them are measured on the same processor and with the same accuracy protocol.
@@ -319,33 +319,33 @@ This thesis therefore treats right-sizing (choosing a smaller dense model) and d
 \section{Application: detecting grape bunches from a drone}
 \label{sec:intro_application}
 
-The research questions are initially inestigated on COCO, the standard benchmark for object detection \cite{Lin2014COCO}, and subsequently evaluated withing a precision viticulture application. In the mission examined here, which is part of DRAGONS project, a drone equipped with a camera flies along vineyard rows to locate grape bunches, then approaches a bunch to collect a sample for ripeness assessment. The detector executes on board, it must operate within constrainst of a compact compute module, while accomodating two vastly different spatial scales: distant detection during the search phase, and close-range detection during the approach phase. 
+The research questions are initially investigated on COCO, the standard benchmark for object detection \cite{Lin2014COCO}, and subsequently evaluated within a precision viticulture application. In the mission examined here, which is part of the DRAGONS project, a drone equipped with a camera flies along vineyard rows to locate grape bunches, then approaches a bunch to collect a sample for ripeness assessment. The detector executes on board, so it must operate within the constraints of a compact compute module, while accommodating two vastly different spatial scales: distant detection during the search phase, and close-range detection during the approach phase. 
 
-W{\l}odarczyk et al.~\cite{Wlodarczyk2026GrapesReady} catalogued publicly available vineyard datasets and assesed their suitability for 3D scene reconstruction. Their taxonomy was utilised here to identify datasets annotated for grape bunch dtections, resulting in the selection of two benchmarks for this thesis. GrapeMOTS \cite{ArizaSentis2024GrapeMOTS} comprises aerial drone footage captured along vineyard row, where grape bunches appear small and hard to distinguish, representing the search phase. Converesly, the Embrapa Wine Grape Instance Segmentation Dataset (WGISD) \cite{Santos2020WGISD} consists of a close range photographic collections of grape bunches in approach phase. Both dataset are relatively small compared to COCO; for instance, WGISD contains only 300 images. This study therefore also investigates whether insigts from large generic benchmarks are applicable to the smaller datasets typical of agricultural applications.
+W{\l}odarczyk et al.~\cite{Wlodarczyk2026GrapesReady} catalogued publicly available vineyard datasets and assessed their suitability for 3D scene reconstruction. Their catalogue was used here to identify datasets annotated for grape bunch detection, resulting in the selection of two benchmarks for this thesis. GrapeMOTS \cite{ArizaSentis2024GrapeMOTS} comprises aerial drone footage captured along vineyard rows, where grape bunches appear small and hard to distinguish, representing the search phase. Conversely, the Embrapa Wine Grape Instance Segmentation Dataset (WGISD) \cite{Santos2020WGISD} consists of a series of close-range photographs of grape bunches, representing the approach phase. Both datasets are relatively small compared to COCO; for instance, WGISD contains only 300 images. This study therefore also investigates whether insights from large generic benchmarks are applicable to the smaller datasets typical of agricultural applications.
 
 
 \section{Aim and research questions}
 \label{sec:intro_aim}
 
-The objective of this thesis is to determine under what conditions compressing an object detector yields a superior accuracy--latency trade-off on a given processor, compared to simpler alternatives of choosing smaller models, selecting a number format, or adjusting input resolution and tensor dimensons. The study is guided by three research questions:
+The objective of this thesis is to determine under what conditions compressing an object detector yields a superior accuracy--latency trade-off on a given processor, compared to simpler alternatives of choosing smaller models, selecting a number format that matches the processor, or adjusting input resolution and aspect ratio. The study is guided by three research questions:
 
 
 \begin{enumerate}
-    \item[\textbf{RQ1}] \textbf{Generic data.} On a given processor, does structured pruning combined with knowledge distillation or quantisation-aware training ever achieve a more favorable accuracy--latency trade-off than simply choosing a dense model of the right size?
-    \item[\textbf{RQ2}] \textbf{Deployment settings.} To what extent do numerical precision choices or processor instructions sets and imput dimensions affect the accuracy and latency of object detection models, compared with compression techniques?
-    \item[\textbf{RQ3}] \textbf{Transfer to an application.} Do the findings to RQ1 and RQ2 hold for the long-range and close-range views of the vineyard datasets, and what configurations are optimal for each scenario?
+    \item[\textbf{RQ1}] \textbf{Generic data.} On a given processor, does structured pruning combined with knowledge distillation or quantisation-aware training ever achieve a more favourable accuracy--latency trade-off than simply choosing a dense model of the right size?
+    \item[\textbf{RQ2}] \textbf{Deployment settings.} To what extent do the numerical precision, the instruction set of the processor and the input size and shape affect the accuracy and latency of object detection models, compared with compression techniques?
+    \item[\textbf{RQ3}] \textbf{Transfer to an application.} Do the findings of RQ1 and RQ2 hold for the long-range (search) and close-range (approach) views of the vineyard datasets, and which configurations best suit each scenario?
 \end{enumerate}
 
 \section{Scope}
 \label{sec:intro_scope}
 
-The study is deliberately constrained, so that every comparisons are conducted under identical conditions:
+The study is deliberately constrained, so that all comparisons are conducted under identical conditions:
 
 \begin{itemize}
-    \item \textbf{Models.} The nano and small variants of two convolutional detector families, YOLO11 and YOLO26 \cite{UltralyticsYOLO11, UltralyticsYOLO26}, alongside YOLO26m serving as a larger reference and a teacher model in selected experiments. A transformer-based detector, D-FINE \cite{Peng2024DFINE}, is also included as targeted cross-family validation on the vineyard datasets. 
+    \item \textbf{Models.} The nano and small variants of two convolutional detector families, YOLO11 and YOLO26 \cite{UltralyticsYOLO11, UltralyticsYOLO26}, alongside YOLO26m serving as a larger reference and a teacher model in selected experiments. A transformer-based detector, D-FINE \cite{Peng2024DFINE}, is also included as a limited cross-family check on the vineyard datasets.
     \item \textbf{Methods.} Structured channel pruning, knowledge distillation, post-training quantisation and quantisation-aware training, evaluated alongside the deployment configurations mentioned above.
-    \item \textbf{Hardware and runtime.} Inference is benchmarked on an Intel Xeon 6520P server processor restricted to four cores, using the OpenVINO toolkit \cite{OpenVINO}. While this processor natively supports AMX, edge-class hardware is approximated by resticting the execution to AVX2 with VNNI, which is verified on the compiled execution graph. GPUs are used only for training.
-    \item \textbf{Data.} COCO 2017, utilising a training subset for adoption and the 5000 image validation split for exaluation and the vineyard datasets GrapeMOTS and WGISD.
+    \item \textbf{Hardware and runtime.} Inference is benchmarked on an Intel Xeon 6520P server processor restricted to four cores, using the OpenVINO toolkit \cite{OpenVINO}. While this processor natively supports AMX, edge-class hardware is approximated by restricting the execution to AVX2 with VNNI, which is verified on the compiled execution graph. GPUs are used only for training.
+    \item \textbf{Data.} COCO 2017, using a training subset for adaptation and the 5,000-image validation split for evaluation, together with the vineyard datasets GrapeMOTS and WGISD.
     \item \textbf{Exclusions.} Because physical embedded hardware was unavailable, latency is not measured on a real edge device.
 \end{itemize}
 
@@ -355,10 +355,10 @@ The study is deliberately constrained, so that every comparisons are conducted u
 The thesis makes the following contributions:
 
 \begin{enumerate}
-    \item \textbf{An evaluation protocol for CPU-based compression.} A compressed model is considered effective only if it surpasses both the linear interpolation between the dense nano and small variants of its own family, and the global Pareto frontier of all dense models at its measured latency. The criterion is paired with frozen model shortlists, pre-registered test-set evaluations, paired bootstrap confidence intervals, and an instruction-set-limited proxy for edge processors.
-    \item \textbf{A negative result on generic datasets.} On COCO, no pruned and distilled or quantisation-aware model reached the dense baseline. Across all comparissons, compressed variants fell below the reference line by 1.0 to 3.9 AP. 
-    \item \textbf{A conditional positive result on small agricultural data.} On WGISD, distillation improves the dense small model by about two mAP50-95 points. A 20\% pruned small model trained via distillation matches the accuracy of the distilled dense variant, while achieving nano-level latency when evaluated at a reduced input resolution. Ablation studies confirm that distillation rather than pruning or extended training is the source of the improvement.
-    \item \textbf{Empirical guidance on deployment settings.} Numerical precision must allign with hardware capabilities, while input resolution and aspect ration govern the trade-off between accuracy and latency at least as strongly as the evaluated pruning ratios. 
+    \item \textbf{An evaluation protocol for compression aimed at CPU inference.} A compressed model is considered effective only if it surpasses both the linear interpolation between the dense nano and small variants of its own family, and the global Pareto frontier of all dense models at its measured latency. The criterion is paired with frozen model shortlists, pre-registered test-set evaluations, paired bootstrap confidence intervals, and an instruction-set-limited proxy for edge processors.
+    \item \textbf{A negative result on generic datasets.} On COCO, no pruned and distilled or quantisation-aware model reached the dense line. Across all comparisons, compressed variants fell below the reference line by 1.0 to 3.9 AP. 
+    \item \textbf{A conditional positive result on small agricultural data.} On WGISD, distillation improves the dense small model by about two mAP50-95 points. A 20\% pruned small model trained via distillation matches the accuracy of the distilled dense variant, while achieving nano-level latency with a rectangular $480\times640$ input. Control experiments show that distillation rather than pruning or extended training is the source of the improvement.
+    \item \textbf{Empirical guidance on deployment settings.} Numerical precision must align with hardware capabilities (BF16 where AMX is available, INT8 on VNNI-class processors), while input resolution and aspect ratio govern the trade-off between accuracy and latency at least as strongly as the evaluated pruning ratios. 
     \item \textbf{A data audit for the vineyard mission.} This thesis evaluates the suitability of public datasets for the mission and diagnoses the failure modes of long-range detection on GrapeMOTS. Performance is limited by object size, lighting conditions and domain gaps, rather than model size.
     \item \textbf{Reproducible experiments.} Every reported number is traceable to hash-verified models, runtimes and result receipts.
 \end{enumerate}
