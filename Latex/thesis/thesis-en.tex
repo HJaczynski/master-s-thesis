@@ -371,88 +371,48 @@ The thesis makes the following contributions:
 
 
 \chapter{Related work}
-The topic addressed in this work belongs to one of the most actively researched areas in modern machine learning. As deep learning systems are deployed more widely, researchers increasingly study how far such models can be made smaller, faster, and less resource-demanding while still producing results that remain useful in practice \cite{Cheng2017SurveyCompression}. This need is driven not only by scientific interest, but also by real engineering constraints: reduced computation can lower deployment costs, enable real-time operation, and make advanced models accessible on devices with limited power, memory, and processing capability \cite{Sze2017EfficientProcessing}. At the same time, the rapid pace of technological change means that the limits of what is feasible continue to shift as new model architectures, optimisation techniques, and hardware platforms emerge \cite{Tan2020EfficientDet}.
+\label{ch:related_work}
 
-In this thesis, artificial intelligence is considered primarily as a practical tool for automating perception tasks that would otherwise require significant human effort. Specifically, computer vision methods can be employed to detect, classify, or segment objects in images and videos \cite{Ren2015FasterRCNN, Long2015FCN}. While these tasks may appear straightforward for humans in many situations, robust performance across different environments, lighting conditions, viewpoints, and object scales remains challenging for machines. Modern deep learning approaches have achieved strong results, but they often require substantial computational resources, which motivates research on methods that reduce inference cost without sacrificing too much accuracy.
+This chapter reviews the background on which the thesis builds. Sections~\ref{sec:rw_nn}--\ref{sec:rw_transformers} introduce the building blocks of modern vision models: neural networks and their training, convolutional networks and transformers. Section~\ref{sec:rw_detection} describes object detection and the detector families used in the experiments. Section~\ref{sec:rw_efficiency} reviews the methods that make a trained detector cheaper to run, namely quantisation, pruning, knowledge distillation and hardware-aware design. Section~\ref{sec:rw_cpu} explains how inference is executed on general-purpose processors and why measured latency can differ from operation counts. Section~\ref{sec:rw_viticulture} reviews object detection in viticulture, the application domain of the case study. Section~\ref{sec:rw_summary} summarises the gap that the thesis addresses.
 
-The purpose of the related works chapter is therefore to summarise the key directions of research that address efficient inference and deployment. It discusses commonly used approaches to improve efficiency, how these methods affect accuracy and runtime behaviour, and what has been reported in the literature when such techniques are applied to real-time object detection on constrained hardware \cite{Redmon2016YOLO, Han2016DeepCompression}.
+\section{Neural networks and their training}
+\label{sec:rw_nn}
 
+Neural networks are built from many simple computational units, often called \emph{neurons}, that transform their inputs into an output and can be connected into larger structures. An early mathematical model of a neuron was the threshold logic unit of McCulloch and Pitts \cite{McCullochPitts1943}, which later led to trainable models such as the perceptron \cite{Rosenblatt1958Perceptron}. As computing power and training methods improved, neural networks developed into specialised families: recurrent networks for sequences \cite{Hochreiter1997LSTM}, convolutional networks for images \cite{LeCun1998GradientBased}, generative adversarial networks for data generation \cite{Goodfellow2014GAN}, and transformers, which now dominate many results in language and vision \cite{Vaswani2017Attention}.
 
-
-
-\section{Neural networks}
-Neural networks are inspired by the way biological nervous systems process information. In their simplest form, they consist of many small computational units (often called \emph{neurons}) that transform inputs into outputs and can be connected into larger structures. One of the earliest and most influential mathematical models of an artificial neuron was proposed by McCulloch and Pitts in 1943 \cite{McCullochPitts1943}. In this model, a neuron acts as a threshold-based logic unit: it sums its inputs and produces an output depending on whether that sum exceeds a chosen threshold \cite{McCullochPitts1943}. This idea later became a foundation for trainable models such as the perceptron and, over time, for more complex architectures \cite{Rosenblatt1958Perceptron}.
-
-As computing power and training methods improved, neural networks evolved into many specialised families. Examples include recurrent neural networks (RNNs) for sequential data \cite{Hochreiter1997LSTM}, convolutional neural networks (CNNs) for images \cite{LeCun1998GradientBased}, generative adversarial networks (GANs) for data generation \cite{Goodfellow2014GAN}, and transformer-based models, which currently dominate many state-of-the-art results in both vision and language tasks \cite{Vaswani2017Attention}.
-
-
-\subsection{Training neural networks}
-Training a neural network means finding parameter values (weights and biases) that minimise a chosen objective function \cite{LeCun2015DeepLearning}. In supervised learning, this objective typically measures the discrepancy between the model predictions and the ground-truth labels. Let a model with parameters $\theta$ produce predictions $f(\mathbf{x};\theta)$ for an input $\mathbf{x}$. Given a dataset $\mathcal{D}=\{(\mathbf{x}_i,y_i)\}_{i=1}^{N}$ and a loss function $\ell(\cdot)$, the learning problem is commonly written as
+Training a network means finding parameter values that minimise an objective function \cite{LeCun2015DeepLearning}. For a model $f(\mathbf{x};\theta)$ with parameters $\theta$, a dataset $\mathcal{D}=\{(\mathbf{x}_i,y_i)\}_{i=1}^{N}$ and a loss function $\ell$, supervised learning solves
 \[
-\min_{\theta}\; \mathcal{L}(\theta) 
-= \frac{1}{N}\sum_{i=1}^{N} \ell\big(f(\mathbf{x}_i;\theta), y_i\big),
+\min_{\theta}\; \mathcal{L}(\theta) = \frac{1}{N}\sum_{i=1}^{N} \ell\big(f(\mathbf{x}_i;\theta), y_i\big),
 \]
-possibly with an additional regularisation term, e.g., $\lambda \|\theta\|_2^2$, to discourage overly large weights and improve generalisation.
-
-\subsubsection*{Gradient-based optimisation}
-Modern neural networks are trained using gradient-based methods \cite{LeCun2015DeepLearning}. Gradients $\nabla_{\theta}\mathcal{L}(\theta)$ are computed efficiently with backpropagation, which applies the chain rule through the computational graph of the network \cite{Rumelhart1986Backprop}. A basic optimisation method is gradient descent, which iteratively updates parameters as
-\[
-\theta_{t+1} = \theta_t - \eta \nabla_{\theta}\mathcal{L}(\theta_t),
-\]
-where $\eta$ is the learning rate. In practice, evaluating the full gradient over all $N$ samples at every step is expensive, so training is usually performed with \emph{stochastic gradient descent} (SGD) or its variants \cite{RobbinsMonro1951}.
-
-\subsubsection*{Stochastic gradient descent}
-In SGD, the gradient is estimated using a mini-batch $\mathcal{B}_t \subset \mathcal{D}$:
+often with a regularisation term such as $\lambda \|\theta\|_2^2$. The gradient $\nabla_{\theta}\mathcal{L}$ is computed by backpropagation, which applies the chain rule through the computational graph \cite{Rumelhart1986Backprop}, and the parameters are updated by gradient descent, $\theta_{t+1} = \theta_t - \eta \nabla_{\theta}\mathcal{L}(\theta_t)$, with learning rate $\eta$. Because the full gradient is expensive, training uses \emph{stochastic gradient descent} (SGD), which estimates it on a mini-batch $\mathcal{B}_t \subset \mathcal{D}$ \cite{RobbinsMonro1951}:
 \[
 \theta_{t+1} = \theta_t - \eta \nabla_{\theta}\mathcal{L}_{\mathcal{B}_t}(\theta_t),
 \qquad
 \mathcal{L}_{\mathcal{B}_t}(\theta)=\frac{1}{|\mathcal{B}_t|}\sum_{(\mathbf{x},y)\in\mathcal{B}_t}\ell\big(f(\mathbf{x};\theta),y\big).
 \]
-The stochasticity introduced by mini-batches makes optimisation noisier, but also helps escape poor local regions and enables training on large datasets. Common improvements to SGD include momentum and weight decay. Momentum accumulates a running direction of descent \cite{Polyak1964}:
+Momentum accumulates a running direction of descent and smooths the noisy updates \cite{Polyak1964}:
 \[
 \mathbf{v}_{t+1} = \mu \mathbf{v}_t + \nabla_{\theta}\mathcal{L}_{\mathcal{B}_t}(\theta_t),
 \qquad
 \theta_{t+1} = \theta_t - \eta \mathbf{v}_{t+1},
 \]
-where $\mu \in [0,1)$ controls how strongly past gradients influence the update.
-
-The convergence to the minimum is shown in Figure~\ref{fig:sgd}
-
+where $\mu \in [0,1)$ controls the influence of past gradients. Figure~\ref{fig:sgd} illustrates the effect.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.8\linewidth]{SGD_with_momentum.png}
-    \caption{Stochastic Gradient Descent comparison (reproduced from \cite{miller2025hmmMomentum}).}
+    \caption{Stochastic gradient descent with and without momentum (reproduced from \cite{miller2025hmmMomentum}).}
     \label{fig:sgd}
 \end{figure}
 
+In practice, the optimiser, the learning-rate schedule (warm-up, step or cosine decay) and the regularisation (weight decay, data augmentation) are chosen together and strongly affect the result \cite{LeCun2015DeepLearning}. Training is a non-convex problem: many parameter settings reach a low training loss but generalise differently. A held-out validation set is therefore used to choose hyperparameters and the checkpoint to keep, and early stopping guards against overfitting. This matters most on small datasets, where long training can fit the training images closely while accuracy on new images falls.
 
-\subsubsection*{Learning rate selection and line search intuition}
-The learning rate is one of the most important hyperparameters: if it is too large, the optimisation may diverge; if it is too small, convergence can be slow \cite{LeCun2015DeepLearning}. In classical optimisation, \emph{line search} methods choose a step size that sufficiently decreases the objective (for example, through the Armijo condition). Although full line search is rarely used in large-scale deep learning due to its computational cost, the same intuition is evident in practice through learning rate schedules, warm-up phases, and adaptive strategies.
-
-A related idea is \emph{backtracking}: when an update increases the loss or causes unstable training, the step size is reduced and the update is retried. While this is not always implemented explicitly, it is conceptually similar to common training practices such as reducing the learning rate on a plateau, using gradient clipping to avoid exploding updates, or using early stopping to prevent overfitting \cite{LeCun2015DeepLearning}.
-
-\subsubsection*{Searching for good solutions}
-Neural network training is a non-convex optimisation problem, meaning there may be many parameter configurations that achieve low loss but differ in generalisation performance and robustness. As a result, training often involves a search process over:
-\begin{itemize}
-    \item \textbf{Optimiser choice} (e.g., SGD with momentum, Adam, AdamW),
-    \item \textbf{Learning rate schedules} (step decay, cosine decay, one-cycle policy),
-    \item \textbf{Regularisation} (weight decay, data augmentation, dropout),
-    \item \textbf{Model capacity} (number of layers/channels, feature dimensions).
-\end{itemize}
-These choices influence not only final accuracy but also how well a model transfers to constrained environments, such as edge devices \cite{Sze2017EfficientProcessing}.
-
-
-\section{Deep neural networks}
-A deep neural network is a neural network composed of multiple successive layers, where each layer applies a learned transformation followed by a non-linear activation \cite{LeCun2015DeepLearning}. In contrast to shallow models, depth allows the network to represent complex functions through the composition of simpler operations. In computer vision, this often leads to hierarchical feature representations: early layers learn low-level patterns, such as edges and textures, while deeper layers capture higher-level structures, including object parts and entire objects \cite{LeCun2015DeepLearning}.
-
-Despite their strong performance, deep models can be computationally demanding \cite{Sze2017EfficientProcessing}. The cost of inference is determined not only by the number of parameters (which affects storage) but also by the number of operations and the memory required to store intermediate activations. In edge deployments, limitations in processing power, memory capacity, and energy availability make these factors critical. In particular, memory access and bandwidth can become a bottleneck, meaning that reductions in model size or operation count do not always translate directly into proportional speed-ups on a given device \cite{Sze2017EfficientProcessing}.
-
-These properties motivate the use of efficiency techniques that aim to reduce resource requirements while preserving accuracy \cite{Cheng2017SurveyCompression}. Methods such as reduced numerical precision, removal of redundant parameters or structures, transferring knowledge from larger models, and automatically searching for efficient architectures are therefore central to deploying deep networks under real-world constraints \cite{Gholami2021SurveyQuantization, Han2016DeepCompression}.
-
+A \emph{deep} network stacks many such layers, each a learned transformation followed by a non-linear activation. In vision, depth produces hierarchical features: early layers respond to edges and textures, deeper layers to object parts and whole objects \cite{LeCun2015DeepLearning}. Depth and width also determine the cost of inference, which depends on the number of parameters (storage), the number of arithmetic operations and the memory needed for intermediate activations. Memory traffic can be the bottleneck, so a reduction in parameters or operations does not always give a proportional speed-up \cite{Sze2017EfficientProcessing}.
 
 \section{Convolutional neural networks}
-Convolutional Neural Networks (CNNs) are a class of deep learning models designed primarily for processing data with a grid-like structure, most notably images \cite{LeCun2015DeepLearning}. Their key idea is to exploit the spatial structure of an image by using \emph{local connectivity} and \emph{weight sharing}. Unlike fully connected layers, which learn a separate weight for every input feature, convolutional layers apply the same small set of weights (a kernel) across the entire image. This reduces the number of parameters and makes the model more efficient, while also providing a degree of \emph{translation equivariance}, meaning that shifting an object in the image results in a corresponding shift in the feature map. An example architecture is shown in Figure~\ref{fig:CNN}.
+\label{sec:rw_cnn}
+
+Convolutional neural networks (CNNs) are designed for data on a grid, most notably images \cite{LeCun2015DeepLearning}. They rely on \emph{local connectivity} and \emph{weight sharing}: a convolutional layer applies the same small kernel at every position of the image instead of learning a separate weight for every input value. This reduces the number of parameters and makes the layer \emph{translation equivariant}: a shifted object produces a correspondingly shifted response. Figure~\ref{fig:CNN} shows a typical architecture.
 
 \begin{figure}[H]
     \centering
@@ -461,411 +421,182 @@ Convolutional Neural Networks (CNNs) are a class of deep learning models designe
     \label{fig:CNN}
 \end{figure}
 
-\subsection{Convolution operation}
-Given an input feature map $X \in \mathbb{R}^{H \times W \times C_{\text{in}}}$, a convolutional layer produces an output feature map $Y \in \mathbb{R}^{H' \times W' \times C_{\text{out}}}$ by sliding learnable filters over the spatial dimensions. For a filter of size $k \times k$, the output at spatial location $(u,v)$ and output channel $j$ can be written as
+For an input feature map $X \in \mathbb{R}^{H \times W \times C_{\text{in}}}$ and a $k \times k$ kernel, the output at position $(u,v)$ and output channel $j$ is
 \begin{equation}
 Y_{u,v,j} = b_j + \sum_{c=1}^{C_{\text{in}}}\sum_{p=0}^{k-1}\sum_{q=0}^{k-1}
 W_{p,q,c,j}\,X_{u+p,\,v+q,\,c},
 \label{eq:conv2d}
 \end{equation}
-where $W$ denotes the convolutional kernel weights and $b_j$ is the bias for channel $j$. In practice, convolutions often use a stride $s$ (skipping positions) and padding $P$ (extending borders) to control the spatial resolution of the output \cite{LeCun2015DeepLearning}.
+where $W$ are the kernel weights and $b_j$ is a bias. A stride larger than one or a pooling operation reduces the spatial resolution, and a non-linear activation such as $\mathrm{ReLU}(x)=\max(0,x)$ follows each convolution. Modern CNNs combine these operations into building blocks: residual connections that add skip paths and allow deeper networks, batch normalisation that stabilises training, bottlenecks that use $1\times1$ convolutions to reduce and restore the number of channels, and depthwise separable convolutions that factorise a convolution into cheaper parts \cite{LeCun2015DeepLearning, Howard2017MobileNets}.
 
-Convolution is usually followed by a non-linear activation such as ReLU,
+The usual proxy for the cost of a convolutional layer is the number of multiply--accumulate operations (MACs) \cite{Sze2017EfficientProcessing}:
 \[
-\text{ReLU}(x)=\max(0,x),
+\text{MACs} \approx H'W' \cdot C_{\text{out}} \cdot k^2 C_{\text{in}},
 \]
-which enables the network to model non-linear decision functions. Stacking multiple convolutional layers allows the network to build increasingly abstract features.
-
-\subsection{Pooling and hierarchical representations}
-Many CNN architectures include pooling operations, such as max pooling, to reduce spatial resolution and increase robustness to small shifts and distortions \cite{LeCun2015DeepLearning}. For example, max pooling with window size $k \times k$ can be expressed as
-\[
-Y_{u,v,c} = \max_{(p,q)\in\Omega} X_{u+p,\,v+q,\,c},
-\]
-where $\Omega$ indexes the pooling window. Modern architectures may replace pooling with strided convolutions, but the purpose is similar: gradually reducing resolution while increasing the number of channels, forming a hierarchical representation \cite{LeCun2015DeepLearning}.
-
-\subsection{Typical CNN building blocks}
-Over time, CNNs have evolved from simple stacks of convolution and pooling layers into more advanced building blocks \cite{LeCun2015DeepLearning}:
-\begin{itemize}
-    \item \textbf{Residual connections} (e.g., ResNet), which add skip paths to improve gradient flow and enable deeper networks.
-    \item \textbf{Normalisation layers} (e.g., Batch Normalisation), which stabilise training and often speed up convergence.
-    \item \textbf{Bottleneck designs}, which use $1\times1$ convolutions to reduce and then restore channel dimensionality, decreasing computation.
-\end{itemize}
-These design choices are important for practical efficiency, especially when models are deployed on limited hardware \cite{Sze2017EfficientProcessing}.
-
-\subsection{Efficiency considerations for edge deployment}
-CNNs are widely used for edge inference because their operations are structured and can be implemented efficiently on GPUs, NPUs, and other accelerators \cite{Sze2017EfficientProcessing}. However, CNNs can still be computationally expensive, particularly in early layers that process high-resolution feature maps. The total inference cost is influenced by:
-\begin{itemize}
-    \item the input resolution $(H,W)$ and the number of channels,
-    \item kernel size and stride,
-    \item the number of layers and output channels,
-    \item memory bandwidth required to read and write feature maps.
-\end{itemize}
-A common proxy for compute is the number of multiply--accumulate operations (MACs) \cite{Sze2017EfficientProcessing}. For a standard 2D convolution, the approximate MAC count is
-\[
-\text{MACs} \approx H'W' \cdot C_{\text{out}} \cdot (k^2 C_{\text{in}}).
-\]
-This expression highlights why reducing resolution, kernel size, or channel counts can strongly affect runtime \cite{Sze2017EfficientProcessing}.
-
-\subsection{CNNs and model compression}
-CNN structure makes them suitable for many compression methods discussed later in this thesis \cite{Cheng2017SurveyCompression}. For example, \emph{structured pruning} can remove entire channels or filters, directly reducing computation \cite{Han2016DeepCompression}. \emph{Quantisation} can reduce the precision of weights and activations (e.g., from FP32 to INT8), lowering memory usage and often improving latency on supported hardware \cite{Gholami2021SurveyQuantization}. Furthermore, efficient CNN variants (e.g., based on depthwise separable convolutions and other factorised operations) are often designed specifically to reduce MACs and memory access, which is particularly beneficial for real-time object detection on edge devices \cite{Howard2017MobileNets}.
-
-Overall, CNNs remain a foundational architecture in computer vision. Even when newer paradigms, such as transformers, are used, CNN-like components are often retained in early stages or in hybrid models due to their efficiency and strong inductive bias for local spatial patterns \cite{LeCun2015DeepLearning}.
-
-
+where $H' \times W'$ is the output resolution. Two consequences matter for this thesis. First, because $H'$ and $W'$ scale with the input image, the cost of a convolutional network grows roughly with the number of input pixels, so the input resolution and aspect ratio are direct levers on latency. Second, the cost is proportional to the channel counts $C_{\text{in}}$ and $C_{\text{out}}$, which is what structured pruning reduces (Section~\ref{sec:rw_pruning}).
 
 \section{Transformers}
-Transformers are a class of neural network architectures originally introduced for sequence modelling tasks \cite{Vaswani2017Attention}. Their main idea is to replace recurrence with an attention mechanism that enables the model to directly relate different parts of the input to one another. This makes transformers highly parallelisable during training and enables them to capture long-range dependencies more effectively than many earlier architectures \cite{Vaswani2017Attention}.
+\label{sec:rw_transformers}
 
-\subsection{Self-attention mechanism}
-The core component of a transformer is \emph{self-attention} \cite{Vaswani2017Attention}. Given an input sequence represented by embeddings
-\[
-X \in \mathbb{R}^{n \times d},
-\]
-where $n$ is the number of tokens and $d$ is the embedding dimension, the model computes three learned projections: queries $Q$, keys $K$, and values $V$:
-\[
-Q = XW_Q,\quad K = XW_K,\quad V = XW_V,
-\]
-where $W_Q, W_K, W_V \in \mathbb{R}^{d \times d_k}$ are trainable matrices. Attention weights are then computed using scaled dot-product attention:
+Transformers were introduced for sequence modelling and replace recurrence with attention, which relates every element of the input to every other one \cite{Vaswani2017Attention}. For $n$ tokens with embeddings $X \in \mathbb{R}^{n \times d}$, learned projections give queries $Q = XW_Q$, keys $K = XW_K$ and values $V = XW_V$, and scaled dot-product attention computes
 \begin{equation}
 \mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V.
 \label{eq:scaled_dot_product_attention}
 \end{equation}
-Intuitively, the softmax term determines how strongly each token should attend to all other tokens. This allows the representation of each token to be updated based on information from the entire sequence \cite{Vaswani2017Attention}.
-
-In practice, transformers use \emph{multi-head attention}, where multiple attention operations are performed in parallel with different learned projections \cite{Vaswani2017Attention}. This enhances expressiveness by enabling the model to simultaneously focus on different types of relationships. The outputs of the heads are concatenated and projected back to the model dimension:
-\[
-\mathrm{MHA}(X)=\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)W_O.
-\]
+\emph{Multi-head attention} runs several attention operations in parallel with different projections and concatenates their outputs, $\mathrm{MHA}(X)=\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)W_O$ (Figure~\ref{fig:multi-head}). A transformer block combines multi-head attention with a position-wise feed-forward network, residual connections and layer normalisation.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Multi-Head-Attention.png}
-    \caption{Multi-head attention overview (reproduced from \cite{Vaswani2017Attention}).}
+    \caption{Multi-head attention (reproduced from \cite{Vaswani2017Attention}).}
     \label{fig:multi-head}
 \end{figure}
 
-\subsection{Transformer block}
-A standard transformer encoder block consists of:
-\begin{itemize}
-    \item a multi-head self-attention layer,
-    \item a position-wise feed-forward network (FFN),
-    \item residual connections and normalisation layers.
-\end{itemize}
-A simplified formulation of an encoder block can be written as
-\[
-X' = \mathrm{LN}\big(X + \mathrm{MHA}(X)\big), \qquad
-Y = \mathrm{LN}\big(X' + \mathrm{FFN}(X')\big),
-\]
-where $\mathrm{LN}(\cdot)$ denotes layer normalization. The feed-forward network is typically implemented as two linear layers with a non-linear activation:
-\[
-\mathrm{FFN}(x) = W_2 \sigma(W_1 x + b_1) + b_2.
-\]
+The product $QK^T$ costs $\mathcal{O}(n^2)$ operations, so attention becomes expensive for long sequences \cite{Vaswani2017Attention}. Vision Transformers (ViTs) apply transformer encoders to images by splitting an image into $n = HW/P^2$ patches of $P \times P$ pixels, embedding each patch as a token and adding positional embeddings \cite{Dosovitskiy2020ViT}. For high-resolution inputs the number of tokens grows quickly, which motivated hierarchical designs with local windowed attention such as the Swin Transformer \cite{Liu2021Swin}, and methods that merge or drop redundant tokens during inference \cite{Bolya2023ToMe}. Token reduction is not evaluated in this thesis. Transformers enter it through the decoder of the detection transformers described in Section~\ref{sec:rw_detr}.
+
+\section{Object detection}
+\label{sec:rw_detection}
+
+\subsection{The detection task}
+\label{sec:rw_detection_task}
+
+An object detector predicts, for every object in an image, a bounding box, a class label and a confidence score. \emph{Two-stage} detectors such as Faster R-CNN first propose candidate regions and then classify and refine each one \cite{Ren2015FasterRCNN}. \emph{One-stage} detectors predict boxes and classes directly from dense feature maps in a single pass, which makes them simpler and faster \cite{Redmon2016YOLO}. Dense prediction produces many overlapping candidates for the same object, so most one-stage detectors end with non-maximum suppression (NMS): among boxes that overlap by more than an intersection-over-union (IoU) threshold, only the highest-scoring one is kept. NMS is a sequential, data-dependent step whose cost grows with the number of candidates.
+
+Detection accuracy is measured by average precision (AP), the area under the precision--recall curve, computed for each class and averaged over classes. The COCO benchmark, with 80 object categories, averages AP over ten IoU thresholds from 0.50 to 0.95 (mAP50-95) and also reports AP at IoU 0.50 (mAP50) \cite{Lin2014COCO}. The exact protocol used in this thesis is defined in Chapter~3.
+
+\subsection{The YOLO family}
+\label{sec:rw_yolo}
+
+YOLO introduced the one-stage formulation in which a single network predicts boxes and classes over a grid in one forward pass \cite{Redmon2016YOLO}. Its successors improved the backbone, the feature aggregation in the neck, the assignment of training targets, the loss functions and the export tooling. The Ultralytics line used in this thesis is anchor-free and has a decoupled head, with separate branches for classification and box regression \cite{UltralyticsYOLOv8, Sapkota2025YOLOEvolution}. Each generation is released in several scales, from nano (n) through small (s) and medium (m) to large and extra large, obtained by scaling the depth and width of the same design and trained with the same recipe \cite{UltralyticsYOLO11, Jocher2026YOLO26}.
+
+\textbf{YOLO11} builds its backbone and neck from C3k2 blocks and adds a block with spatial self-attention (C2PSA) after the backbone \cite{UltralyticsYOLO11, Sapkota2025YOLOEvolution}. Its head regresses each box side as a discrete probability distribution over a fixed range of bins, trained with the Distribution Focal Loss (DFL), and its predictions are filtered by NMS.
+
+\textbf{YOLO26} keeps the general structure but simplifies the head for deployment \cite{Jocher2026YOLO26}. It removes DFL and regresses box sides directly, which gives a lighter head with an unconstrained regression range. It also uses a dual-head design. A one-to-many head assigns several predictions to each object during training and is filtered with NMS at inference; a one-to-one head is trained so that each object receives a single prediction, which allows inference without NMS. The documentation describes the one-to-many path with NMS as the default for accuracy and the NMS-free path as an option \cite{UltralyticsYOLO26}. Training adds three changes: MuSGD, a hybrid of SGD and the Muon optimiser; Progressive Loss, which shifts supervision towards the head used at inference; and STAL, a label assignment that guarantees positive training targets for small objects. Across the five scales, YOLO26 reports 40.9 to 57.5 mAP50-95 on COCO at 1.7 to 11.8\,ms of TensorRT latency on an NVIDIA T4 GPU \cite{Jocher2026YOLO26}.
+
+Because YOLO11 and YOLO26 share one training framework and one export path, comparisons between them reflect the architecture generation rather than the tooling. The nano and small scales are the ones relevant for edge processors.
+
+\subsection{Detection transformers}
+\label{sec:rw_detr}
+
+DETR formulates detection as direct set prediction \cite{Carion2020DETR}. A transformer encoder--decoder receives image features and a fixed set of learned object queries, and a bipartite matching loss assigns each ground-truth object to exactly one query. The model therefore needs neither anchors nor NMS. Its high computational cost, however, limited its use in real-time settings \cite{Zhao2024RTDETR}.
+
+RT-DETR made the approach real-time with two changes \cite{Zhao2024RTDETR}. An efficient hybrid encoder separates interaction within each feature scale from fusion across scales, and an uncertainty-minimal query selection provides better initial queries to the decoder. The number of decoder layers can be reduced at inference to trade accuracy for speed without retraining. On a T4 GPU, RT-DETR outperformed contemporary YOLO detectors in both speed and accuracy.
+
+D-FINE redefines box regression in DETR models \cite{Peng2024DFINE}. Fine-grained Distribution Refinement replaces the prediction of fixed coordinates by iterative refinement of probability distributions over box edges. Global Optimal Localisation Self-Distillation transfers localisation knowledge from the refined distributions to shallower layers. D-FINE is released in scales from nano to extra large.
+
+RF-DETR uses weight-sharing neural architecture search to find accuracy--latency trade-offs of a detection transformer for a given target dataset, evaluating thousands of configurations without retraining \cite{Robinson2025RFDETR}. Its nano model reports 48.0 AP on COCO, 5.3 AP above D-FINE nano at similar latency.
+
+All latencies reported in these papers are measured on GPUs with optimised runtimes. How detection transformers compare with convolutional detectors on processors, at equal accuracy, is rarely reported. This thesis includes D-FINE as a limited cross-family check for that reason.
+
+\section{Making detectors cheaper}
+\label{sec:rw_efficiency}
+
+Deploying a detector on a device with limited computing power, memory and energy requires reducing the cost of inference while keeping accuracy as close as possible to that of an unconstrained model \cite{Cheng2017SurveyCompression, Sze2017EfficientProcessing}. This viewpoint is sometimes called \emph{frugal artificial intelligence}. The main families of methods reduce the numerical precision (quantisation), remove redundant structures (pruning), transfer knowledge from a larger model to a smaller one (knowledge distillation), or search for architectures that meet a hardware budget \cite{Gholami2021SurveyQuantization, Han2016DeepCompression, Hinton2015Distilling, Cai2019ProxylessNAS}.
+
+\subsection{Quantisation and number formats}
+\label{sec:rw_quantisation}
+
+Networks are usually trained and stored in 32-bit floating point (FP32). Quantisation represents weights and activations with fewer bits, which reduces storage and memory traffic and, on hardware with suitable instructions, speeds up computation \cite{Gholami2021SurveyQuantization, Sze2017EfficientProcessing}. Figure~\ref{fig:number_formats} compares the formats relevant here. The 16-bit IEEE format (FP16) keeps more mantissa bits but has a much smaller range than FP32. The brain floating-point format (BF16) keeps the 8-bit exponent of FP32 and therefore its range, so conversion is simple and models usually run in BF16 without recalibration, at the cost of a coarser mantissa \cite{Kalamkar2019BF16}. INT8 represents values as 8-bit integers together with a scale.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{transformer-architecture.png}
-    \caption{Transformer architecture overview (reproduced from \cite{Vaswani2017Attention}).}
-    \label{fig:transformer-architecture}
+        \includegraphics[width=0.9\linewidth]{number_formats.pdf}
+    \caption{Bit layout and range of the number formats discussed in this thesis. Floating-point formats store a sign, an exponent and a mantissa; INT8 stores an integer that is mapped to a real value by a scale (and a zero-point).}
+    \label{fig:number_formats}
 \end{figure}
 
-\subsection{Efficiency considerations}
-Compared to convolutions, the attention mechanism has a different computational profile \cite{Vaswani2017Attention}. For a sequence of length $n$, the $QK^T$ operation in Equation~\eqref{eq:scaled_dot_product_attention} has $\mathcal{O}(n^2)$ complexity, which can become expensive when $n$ is large \cite{Vaswani2017Attention}. In many practical settings, runtime and memory are influenced not only by arithmetic operations but also by the cost of moving data between memory and compute units \cite{Sze2017EfficientProcessing}. These factors are particularly important for edge deployment, where memory bandwidth and cache sizes are limited \cite{Sze2017EfficientProcessing}.
-
-\subsection{Relation to computer vision}
-Transformers were originally designed for language processing, where inputs are naturally represented as token sequences \cite{Vaswani2017Attention}. Images, however, are two-dimensional arrays of pixels. To apply transformers to vision tasks, images must be converted into a sequence representation while preserving spatial information. This motivates Vision Transformers, introduced in the next subsection \cite{Dosovitskiy2020ViT}.
-
-\subsection{Vision Transformers}
-Vision Transformers (ViTs) adapt transformer encoders to image understanding by representing an image as a sequence of fixed-size patches \cite{Dosovitskiy2020ViT}. An image of size $H \times W$ is split into patches of size $P \times P$, producing
-\[
-n = \frac{HW}{P^2}
-\]
-patches. Each patch is flattened and mapped into a $d$-dimensional embedding space. Because transformers have no inherent notion of token order, learnable \emph{positional embeddings} are added to encode patch locations \cite{Dosovitskiy2020ViT}. The resulting sequence is then processed by a standard transformer encoder stack \cite{Dosovitskiy2020ViT}.
-
-ViTs have demonstrated strong performance, particularly when trained on large datasets, and are utilised in many modern vision systems \cite{Dosovitskiy2020ViT}. However, the quadratic cost of attention with respect to the number of patches means that high-resolution inputs can be computationally expensive \cite{Vaswani2017Attention}. As a result, many practical vision transformer variants introduce efficiency improvements, such as hierarchical token representations, local or windowed attention, and reduced token counts \cite{Liu2021Swin}. These considerations are directly relevant to edge deployment, where input resolution and model size strongly affect latency and energy consumption \cite{Sze2017EfficientProcessing}.
-
-
-\section{Object detection architectures considered in this work}
-Object detection extends image classification by requiring both class prediction and spatial localisation. Modern detectors therefore differ not only in the feature extractor used to represent an image, but also in the way they assign predictions to objects, decode bounding boxes, and perform post-processing. Since these design choices influence both accuracy and runtime, this thesis compares detector families rather than isolated backbones.
-
-\subsection{YOLO-style one-stage detectors}
-YOLO introduced a one-stage formulation in which object classes and bounding boxes are predicted directly from an image in a single forward pass \cite{Redmon2016YOLO}. This idea is attractive for real-time deployment because it avoids the separate region-proposal stage used by two-stage detectors such as Faster R-CNN \cite{Ren2015FasterRCNN}. Later YOLO implementations improved the training recipe, feature aggregation, anchor handling, loss functions, export tooling, and hardware deployment support. In this thesis, YOLOv8 is used as a mature Ultralytics baseline, while YOLO26 is included as a newer comparison point intended to represent the current direction of deployment-oriented YOLO models \cite{UltralyticsYOLOv8, UltralyticsYOLO26}.
-
-\subsection{Detection transformers and RF-DETR}
-DETR-style models formulate object detection as a set prediction problem, replacing many hand-designed post-processing components with transformer attention and learned object queries. This family is conceptually important because it connects object detection with the broader success of transformer architectures in vision and language \cite{Vaswani2017Attention, Dosovitskiy2020ViT}. RF-DETR is especially relevant for this thesis because it targets the real-time part of the design space: instead of only maximising accuracy, it searches for accuracy--latency Pareto-efficient detection transformer variants and provides COCO-pretrained checkpoints suitable for practical evaluation \cite{Robinson2025RFDETR}. It therefore serves as the main transformer detector baseline in the experimental part.
-
-\subsection{Swin Transformer detectors}
-Swin Transformer addresses a key limitation of plain ViTs for dense vision tasks: global attention over all image patches becomes expensive at high resolution. Swin uses a hierarchical representation and shifted local windows, which reduces attention cost while still allowing information to move across neighbouring windows \cite{Liu2021Swin}. This makes it suitable for object detection and segmentation, where multi-scale spatial features are important. In this thesis, a Swin-T Mask R-CNN detector is treated as the hierarchical vision-transformer representative. It is not expected to be the fastest model, but it provides a useful contrast to both RF-DETR and YOLO: it combines transformer-style feature extraction with a conventional detection framework.
-
-
-\section{Token reduction for vision transformers}
-
-Token reduction is an efficiency direction specific to transformer-style models. In a vision transformer, an image is represented as a sequence of patch tokens. Since self-attention compares tokens with one another, reducing the number of tokens can lower both computation and memory use, especially in deeper layers where the representation is already semantically richer \cite{Vaswani2017Attention, Dosovitskiy2020ViT}. This makes token reduction complementary to quantisation and pruning: quantisation reduces numerical precision, pruning removes model structures or parameters, while token reduction reduces the amount of intermediate representation processed during inference.
-
-\subsection{Token pruning and token merging}
-
-Token-reduction methods can be broadly divided into token pruning and token merging. Token pruning removes tokens judged to be less important, for example background patches or low-saliency regions. This can be efficient, but it risks discarding information that later layers might need. Token merging instead combines similar or redundant tokens into fewer representative tokens. This may preserve more information than hard removal because the merged token still carries a fused representation of the original tokens.
-
-Token Merging (ToMe) is a representative training-free approach that merges similar tokens inside ViT models to reduce inference cost without retraining the full network \cite{Bolya2023ToMe}. Its appeal for this thesis is practical: it suggests that token reduction can be evaluated as an inference-time modification before committing to expensive fine-tuning. More recent methods such as MaMe and MPM further explore how token pairs or groups should be selected and fused \cite{MaMe2026, MPM2026}. Although these works are not yet standard deployment tools for object detection, they provide useful design ideas for reducing token count in RF-DETR and Swin-style detectors.
-
-\subsection{Why detection is harder than classification}
-
-Applying token reduction to object detection is more difficult than applying it to image classification. A classifier only needs enough information to predict one or more image-level labels. A detector must also localise objects, preserve small-object evidence, and maintain spatial detail across the feature hierarchy. Removing or merging tokens too aggressively may therefore hurt bounding-box quality even if the main object category remains recognisable.
-
-This is particularly important for COCO, where many images contain multiple objects at different scales. Background-looking tokens may still provide context, and small objects may occupy only a few patches. For this reason, token reduction for detection should start conservatively: lower merge ratios, later-layer merging, and careful measurement of AP for small, medium, and large objects. The final evaluation should not only report global mAP, but also check whether small-object AP degrades disproportionately.
-
-\subsection{Relation to RF-DETR and Swin}
-
-RF-DETR and Swin provide two different settings for token reduction. In RF-DETR, token reduction can be inserted in the encoder before object queries attend to image features. The challenge is to reduce redundant image tokens without weakening the decoder's ability to identify object locations. In Swin, token reduction must respect the hierarchical windowed structure. A merge applied inside local windows is easier to align with Swin's attention pattern, while merging across windows may reduce more redundancy but risks disturbing the shifted-window design \cite{Liu2021Swin}.
-
-For this thesis, token reduction is therefore treated as a planned transformer-specific compression axis rather than as a completed result. The initial implementation should use a simple ToMe-like or MaMe/MPM-inspired merging step, measure its isolated effect, and only then combine it with FP16 or INT8. This order is important because token reduction changes the representation itself, while quantisation changes numerical precision. Evaluating them separately makes the source of any accuracy loss easier to identify.
-
-
-\section{Frugal artificial intelligence}
-As deep learning systems become more widely deployed, practical limitations such as computation time, memory usage, energy consumption, and data availability increasingly determine whether a solution can be used in real-world scenarios. In many applications, especially on edge devices, it is not sufficient for a model to be accurate in a laboratory setting---it must also be efficient enough to run under strict hardware constraints and, in some cases, with limited access to training data or communication bandwidth. These constraints motivate a set of methods whose goal is to reduce the overall ``cost'' of using artificial intelligence while keeping performance as close as possible to that of unconstrained models \cite{Cheng2017SurveyCompression}.
-
-In this thesis, the term \emph{frugal artificial intelligence} refers to the design and deployment of AI systems that aim to achieve strong predictive performance while minimising resource requirements \cite{Sze2017EfficientProcessing}. This includes reducing the computational cost of inference, lowering memory and storage demands, and improving energy efficiency \cite{Sze2017EfficientProcessing}. In addition, frugal approaches can also address data-related costs, such as the amount of labelled data needed for training or the cost of transmitting data to remote servers. The underlying idea is to build systems that are not only accurate but also feasible to deploy and maintain in environments with limited resources.
-
-Frugal AI is particularly relevant for real-time computer vision tasks such as object detection, where models must process high-dimensional inputs (images or video frames) within strict time budgets \cite{Redmon2016YOLO}. In such settings, the core challenge is to navigate trade-offs between accuracy and efficiency. The following subsections introduce the main families of techniques used to make deep learning models more suitable for constrained deployment \cite{Cheng2017SurveyCompression}. These include reducing numerical precision, removing redundant parameters or structures, transferring knowledge from larger models to smaller ones, and automatically searching for architectures that satisfy hardware-dependent requirements \cite{Gholami2021SurveyQuantization, Hinton2015Distilling, Cai2019ProxylessNAS}.
-
-
-\subsection{Quantisation}
-Quantisation is a family of techniques that reduce the numerical precision used to represent a neural network. In standard deep learning workflows, model weights and activations are typically stored and computed in 32-bit floating point (FP32). Although FP32 offers high numerical accuracy, it requires significant memory bandwidth and compute \cite{Sze2017EfficientProcessing}. Quantisation replaces FP32 with lower-precision formats such as FP16 or INT8, which can reduce model size and, on supported hardware, improve inference speed and energy efficiency. This makes quantisation particularly relevant for edge deployment, where memory and power are often limited.
-
-\subsubsection*{Basic idea}
-In many practical schemes, a real-valued tensor $x$ is mapped to an integer tensor $x_q$ through an affine transformation defined by a \emph{scale} $s$ and a \emph{zero-point} $z$ \cite{Jacob2018QuantizationIntegerOnly}:
+In integer quantisation, a real-valued tensor $x$ is mapped to an integer tensor $x_q$ by an affine transformation with a \emph{scale} $s$ and a \emph{zero-point} $z$ \cite{Jacob2018QuantizationIntegerOnly}:
 \begin{equation}
 x_q = \mathrm{clip}\!\left(\left\lfloor \frac{x}{s} \right\rceil + z,\; q_{\min},\; q_{\max}\right),
 \label{eq:quant_affine}
 \end{equation}
-where $\lfloor \cdot \rceil$ denotes rounding to the nearest integer and $[q_{\min}, q_{\max}]$ defines the representable integer range (for example $[-128,127]$ for signed INT8). During inference, values can be approximately reconstructed by
+where $\lfloor \cdot \rceil$ denotes rounding and $[q_{\min}, q_{\max}]$ is the integer range, for example $[-128,127]$ for signed INT8. The value is approximately recovered by
 \begin{equation}
 \hat{x} = s(x_q - z).
 \label{eq:dequant}
 \end{equation}
-The parameters $s$ and $z$ are commonly derived from observed tensor ranges. If $x$ is assumed to lie in $[x_{\min},x_{\max}]$, a typical choice is
-\[
-s = \frac{x_{\max}-x_{\min}}{q_{\max}-q_{\min}}, 
-\qquad
-z = \left\lfloor q_{\min} - \frac{x_{\min}}{s} \right\rceil.
-\]
-This formulation is widely used in deployment toolchains because it enables efficient integer arithmetic while approximating the original floating-point computations \cite{Jacob2018QuantizationIntegerOnly}.
+The parameters are derived from the observed range $[x_{\min},x_{\max}]$ of the tensor, for example $s = (x_{\max}-x_{\min})/(q_{\max}-q_{\min})$. They can be shared by a whole tensor (per-tensor) or defined separately for each output channel (per-channel), which usually preserves accuracy better for convolution weights. Symmetric quantisation fixes $z=0$ and is common for weights; asymmetric quantisation allows $z \neq 0$ and suits activations whose distribution is not centred at zero \cite{Gholami2021SurveyQuantization}.
 
-\subsubsection*{Weight quantisation and activation quantisation}
-Quantisation can be applied to:
-\begin{itemize}
-    \item \textbf{Weights} (model parameters), which primarily reduces storage and improves cache efficiency. Weight-only quantisation can already provide benefits in memory-constrained scenarios.
-    \item \textbf{Activations} (intermediate feature maps), which often dominate runtime memory usage during inference, especially for high-resolution vision models. Quantising activations can substantially reduce memory bandwidth requirements.
-\end{itemize}
-In practice, quantising activations is more challenging than quantising weights, because activation distributions depend on the input data and can vary between layers \cite{Gholami2021SurveyQuantization}.
+\emph{Post-training quantisation} (PTQ) converts a trained model without retraining. A small calibration set is passed through the network to estimate the ranges of the activations, which depend on the input data and are harder to quantise than the weights. \emph{Quantisation-aware training} (QAT) simulates quantisation during training: tensors are quantised and dequantised in the forward pass, while gradients flow through the rounding with a straight-through estimator. QAT usually recovers more accuracy than PTQ at the same bit width, at the cost of extra training \cite{Gholami2021SurveyQuantization, Jacob2018QuantizationIntegerOnly}. The Neural Network Compression Framework (NNCF) implements quantisation and other compression methods for models deployed with OpenVINO \cite{Kozlov2020NNCF, OpenVINO}.
 
-\subsubsection*{Granularity: per-tensor vs.\ per-channel}
-A key design choice is the granularity at which quantisation parameters are defined \cite{Gholami2021SurveyQuantization}:
-\begin{itemize}
-    \item \textbf{Per-tensor quantisation}: a single $(s,z)$ pair is used for the entire tensor. This approach is simple and efficient, but it can compromise accuracy if the ranges of different channels differ significantly.
-    \item \textbf{Per-channel quantisation}: separate scales (and sometimes zero-points) are used for each output channel (common for convolution weights). This typically improves accuracy because it adapts to channel-wise variation at a small additional implementation cost.
-\end{itemize}
-For convolutional layers, per-channel quantisation of weights is commonly used in practice because it often yields better accuracy at the same bit-width.
-
-\subsubsection*{Post-training quantisation (PTQ)}
-Post-training quantisation converts a trained FP32 model to lower precision without re-training the model. The main advantage of PTQ is that it is fast and easy to apply. A typical PTQ workflow includes a \emph{calibration} step, where a small representative dataset is passed through the network to estimate activation ranges. PTQ is widely used in deployment scenarios when re-training is not feasible \cite{Gholami2021SurveyQuantization}.
-
-However, PTQ may introduce a noticeable decrease in accuracy for certain models and tasks. Object detection is often more sensitive than image classification because it includes both classification and localisation components and may depend on small numerical differences in bounding box regression.
-
-\subsubsection*{Quantisation-aware training (QAT)}
-Quantisation-aware training incorporates quantisation effects during training, allowing the network to adapt to reduced precision. A common approach uses \emph{fake quantisation}: during the forward pass, tensors are quantised and dequantised to simulate INT8 behaviour, while gradients are still computed in floating-point (often using a straight-through estimator). As a result, QAT typically achieves higher accuracy than PTQ at the same bit-width, at the cost of additional training time and complexity \cite{Gholami2021SurveyQuantization}.
-
-\subsubsection*{Symmetric vs.\ asymmetric quantisation}
-Quantisation can be \cite{Gholami2021SurveyQuantization}:
-\begin{itemize}
-    \item \textbf{Symmetric}, where $z=0$ and the integer range is centred around zero. This can simplify computation and is common for weights.
-    \item \textbf{Asymmetric}, where $z \neq 0$, allowing the range to shift. This can better represent non-zero-centred distributions and is often used for activations.
-\end{itemize}
-The choice affects both accuracy and hardware efficiency, and in practice, it is often determined by the deployment framework and accelerator capabilities \cite{Gholami2021SurveyQuantization}.
-
-\subsubsection*{Why quantisation helps on edge devices}
-Quantisation can improve edge inference for several reasons \cite{Sze2017EfficientProcessing}:
-\begin{itemize}
-    \item \textbf{Reduced model size}: fewer bits per weight lowers storage requirements and improves cache usage.
-    \item \textbf{Lower memory bandwidth}: quantised activations require fewer bytes to read and write, which can be critical on constrained devices.
-    \item \textbf{Faster compute on supported hardware}: many NPUs and mobile accelerators provide highly optimised INT8 operations.
-    \item \textbf{Lower energy consumption}: moving and processing fewer bits often reduces power usage, which is important for battery-powered systems.
-\end{itemize}
-At the same time, observed speedups depend on the hardware and runtime stack. If the inference engine does not support a quantised operator, it may fall back to floating-point execution, reducing the practical benefits \cite{Sze2017EfficientProcessing}.
-
-\subsubsection*{Quantisation in the context of compression pipelines}
-Quantisation is often combined with other compression methods \cite{Cheng2017SurveyCompression}. For example, pruning can reduce the number of channels or filters, and quantisation can then further reduce memory and bandwidth \cite{Han2016DeepCompression}. Knowledge distillation can help recover accuracy lost due to low-precision constraints by training a compact quantised model to mimic a larger teacher \cite{Hinton2015Distilling}. These combinations are commonly used in edge deployment workflows because they address different sources of cost: model size, compute, and numerical precision \cite{Cheng2017SurveyCompression}.
-
+Object detectors are often more sensitive to quantisation than classifiers, because box regression depends on small numerical differences, and some operations, such as box decoding, are usually kept in higher precision. A quantised detector is therefore a mixed-precision graph rather than an all-integer one. Whether quantisation pays off depends on the hardware: if the runtime has no fast integer kernel for an operation, the operation falls back to floating point and the expected gain shrinks \cite{Sze2017EfficientProcessing}. Section~\ref{sec:rw_cpu} returns to this point for processors.
 
 \subsection{Pruning}
-Pruning refers to a family of methods that reduce the size and computational cost of a neural network by removing parameters that are considered unnecessary \cite{Cheng2017SurveyCompression}. Modern deep learning models are often over-parameterised, meaning that they contain redundancy in their weights and internal representations. Pruning attempts to exploit this redundancy by eliminating parts of the model while maintaining accuracy as much as possible. In the context of edge deployment, pruning is attractive because it can reduce inference latency, memory usage, and energy consumption, especially when it leads to a smaller dense model that runs efficiently on standard hardware \cite{Sze2017EfficientProcessing}.
+\label{sec:rw_pruning}
 
-\subsubsection*{General formulation}
-Let a model be parameterised by $\theta \in \mathbb{R}^n$. A common view of pruning is to introduce a binary mask $\mathbf{m} \in \{0,1\}^n$ that selects which parameters remain active:
+Pruning removes parameters that contribute little to the output \cite{Cheng2017SurveyCompression}. With a binary mask $\mathbf{m}$ over the parameters, the pruned model uses $\theta' = \mathbf{m} \odot \theta$ and is usually fine-tuned afterwards to recover accuracy \cite{Han2016DeepCompression}. \emph{Unstructured} pruning removes individual weights, for example those with the smallest magnitude. It can reach high sparsity, but the remaining weights form irregular patterns that standard dense kernels cannot exploit, so the latency often does not decrease without specialised sparse hardware or software \cite{Sze2017EfficientProcessing}. \emph{Structured} pruning removes whole filters, channels, attention heads or blocks. The result is a smaller dense network that runs with ordinary kernels, and by the MAC formula of Section~\ref{sec:rw_cnn} removing output channels of one layer and the matching input channels of the next reduces the cost of both.
+
+Pruning methods differ in how they rank structures. Magnitude criteria remove the filters with the smallest $\ell_1$ or $\ell_2$ norm \cite{Li2017PruningFilters}. Used on their own, they do not indicate how much to remove from each layer, which Li et al.\ determined with a per-layer sensitivity analysis. Taylor criteria estimate the change of the loss when a structure is removed from the product of its weights and their gradients \cite{Molchanov2019Taylor}. For a group $\mathcal{G}$ of parameters, the first-order estimate is
 \[
-\theta' = \mathbf{m} \odot \theta,
+\mathcal{I}_{\mathcal{G}} = \Big(\sum_{s \in \mathcal{G}} g_s\, w_s\Big)^2,
+\qquad g_s = \frac{\partial \mathcal{L}}{\partial w_s}.
 \]
-where $\odot$ denotes element-wise multiplication and $\theta'$ are the effective parameters used at inference. Pruning corresponds to setting some components of $\mathbf{m}$ to zero. The resulting pruned model is then typically fine-tuned to recover performance \cite{Han2016DeepCompression}.
+Because it is computed from the training loss on real data, it can be compared across layers without a separate sensitivity analysis for each layer \cite{Molchanov2019Taylor}.
 
-\subsubsection*{Unstructured pruning}
-\textbf{Unstructured pruning} removes individual weights, for example, by setting to zero weights with small magnitude \cite{Han2016DeepCompression}:
-\[
-m_i =
-\begin{cases}
-0, & \text{if } |\theta_i| < \tau,\\
-1, & \text{otherwise,}
-\end{cases}
-\]
-where $\tau$ is a threshold chosen to reach a desired sparsity level. This approach can substantially reduce the number of non-zero parameters, but the remaining weights form irregular sparse patterns. In practice, unstructured sparsity does not always translate into lower latency on edge devices because efficient execution often requires specialised sparse kernels or hardware support. Without such support, a sparse model may be stored compactly but still executed as if it were dense \cite{Sze2017EfficientProcessing}.
+In modern architectures, channels are coupled: a residual addition, a concatenation or a split requires the same channels to be removed from several layers at once, otherwise the shapes no longer match. DepGraph models these dependencies automatically and groups the coupled parameters, so that any architecture can be pruned consistently \cite{Fang2023DepGraph}. Pruning can be applied in one shot, followed by fine-tuning, or gradually over several rounds of pruning and fine-tuning, which usually preserves accuracy better at the same final size \cite{Han2016DeepCompression}. In detectors, the backbone and neck carry most of the computation and are the usual targets, while the final prediction layers and attention blocks are often left intact.
 
-\subsubsection*{Structured pruning}
-\textbf{Structured pruning} removes whole structures such as convolutional channels, filters, attention heads, or complete blocks. This produces a smaller dense network with reduced tensor dimensions, which typically provides more predictable speedups on common accelerators \cite{Sze2017EfficientProcessing}.
-
-For example, in a convolutional layer, one may prune output channels (filters). If the original convolution has $C_{\text{out}}$ output channels, pruning removes a subset of these channels and adjusts subsequent layers accordingly. This directly reduces both parameter count and computational cost, since the approximate MAC count of a convolution scales with channel dimensions:
-\[
-\text{MACs} \approx H'W' \cdot C_{\text{out}} \cdot (k^2 C_{\text{in}}).
-\]
-Reducing $C_{\text{out}}$ (and often $C_{\text{in}}$ in downstream layers) therefore reduces compute and memory traffic \cite{Sze2017EfficientProcessing}.
-
-\subsubsection*{Pruning criteria}
-Pruning methods differ mainly in how they decide what to remove. Common criteria include~\cite{Cheng2017SurveyCompression}:
-\begin{itemize}
-    \item \textbf{Magnitude-based pruning}: removes weights or channels with small magnitude (simple and widely used).
-    \item \textbf{Gradient-based or sensitivity-based pruning}: removes parameters that have a small effect on the loss, often estimated using gradients or second-order approximations.
-    \item \textbf{Norm-based channel pruning}: removes channels with small $\ell_1$ or $\ell_2$ norm in convolution kernels.
-\end{itemize}
-In practice, magnitude- or norm-based pruning is popular because it is easy to implement and often provides a good baseline.
-
-\subsubsection*{One-shot vs.\ iterative pruning}
-Pruning can be applied:
-\begin{itemize}
-    \item \textbf{One-shot}, where a fixed fraction of parameters is removed at once, followed by fine-tuning.
-    \item \textbf{Iteratively}, where pruning is performed gradually over multiple stages (e.g., prune a small fraction, fine-tune, repeat). This often yields better accuracy for the same final sparsity because the network has time to adapt \cite{Han2016DeepCompression}.
-\end{itemize}
-Iterative pruning is especially common when aggressive compression is required, such as for real-time inference on constrained devices.
-
-\subsubsection*{Pruning and fine-tuning}
-After pruning, fine-tuning is usually required \cite{Han2016DeepCompression}. Pruning changes the model capacity and can disrupt learned representations. Fine-tuning allows the remaining parameters to adapt and compensate for removed components. In some workflows, pruning is integrated into training by adding sparsity-inducing regularisation, for example, an $\ell_1$ penalty on weights or structured regularisers that encourage entire channels to become small.
-
-\subsubsection*{Pruning for edge deployment}
-For edge deployment, the practical benefit of pruning depends strongly on whether pruning reduces the \emph{actual} runtime bottlenecks \cite{Sze2017EfficientProcessing}. Structured pruning typically provides more consistent improvements because it reduces tensor sizes and can be accelerated by standard dense kernels. In contrast, unstructured pruning may yield a smaller parameter count without latency gains unless the target device and inference engine support sparse computation \cite{Sze2017EfficientProcessing}.
-
-When applied to object detection models, pruning must be performed carefully because detection performance can be sensitive to capacity reductions, especially for small objects and complex scenes \cite{Cheng2017SurveyCompression}. Common practice is to primarily prune the backbone and neck components (which dominate computation) while preserving critical parts of the detection head. In many cases, pruning is combined with other methods such as quantisation or knowledge distillation to recover accuracy while maintaining a smaller and faster model.
-
-
+The value of pruning has been questioned. For the structured pruning methods they examined, Liu et al.\ found that training the pruned architecture from scratch gave comparable or better accuracy than fine-tuning the inherited weights; they concluded that the pruned \emph{architecture} matters more than the inherited weights and called for stronger baselines \cite{Liu2019RethinkingPruning}. A meta-analysis of 81 papers found that the lack of standardised benchmarks and metrics makes pruning methods difficult to compare with one another \cite{Blalock2020StatePruning}. In addition, savings are usually reported in parameters or operations, and fewer operations do not translate one-to-one into lower latency (Section~\ref{sec:rw_cpu}). A pruned model is rarely compared with the obvious alternative: a smaller dense model of the same family, measured on the same device.
 
 \subsection{Knowledge distillation}
-Knowledge distillation is a training strategy used to improve the performance of a compact model by transferring information from a larger, typically more accurate model. The larger model is referred to as the \emph{teacher}, while the smaller model is the \emph{student}. The primary motivation is that small models often have limited capacity and may struggle to achieve high accuracy when trained solely with hard ground-truth labels. A teacher model can provide richer supervision signals that help the student learn a better decision function without increasing inference cost \cite{Hinton2015Distilling}.
+\label{sec:rw_kd}
 
-\subsubsection*{Teacher--student framework}
-In the teacher--student setup, the teacher network $f_T(\cdot)$ is trained first (or chosen as an already strong model). The student network $f_S(\cdot)$ is then trained using both:
-\begin{itemize}
-    \item \textbf{hard labels} (the original targets), and
-    \item \textbf{soft targets} derived from the teacher outputs.
-\end{itemize}
-Soft targets contain information about class similarities and uncertainties. For example, if the teacher assigns non-zero probability to multiple classes, it communicates that these classes are visually related, which can improve generalisation compared to training only on one-hot labels \cite{Hinton2015Distilling}.
-
-\subsubsection*{Logit distillation and temperature scaling}
-A common form of distillation uses the teacher and student logits (pre-softmax outputs). Let $\mathbf{z}_T$ and $\mathbf{z}_S$ denote teacher and student logits for the same input. Their softened probability distributions are computed with a temperature parameter $\tau > 1$:
+Knowledge distillation trains a compact \emph{student} model with the help of a larger or more accurate \emph{teacher} \cite{Hinton2015Distilling}. In addition to the ground-truth labels, the student learns from the teacher's outputs, which carry information about similarities between classes and about the teacher's uncertainty. In the classic formulation for classification, teacher and student logits $\mathbf{z}_T$ and $\mathbf{z}_S$ are softened with a temperature $\tau$,
 \begin{equation}
 p_T(\tau) = \mathrm{softmax}\!\left(\frac{\mathbf{z}_T}{\tau}\right),
 \qquad
-p_S(\tau) = \mathrm{softmax}\!\left(\frac{\mathbf{z}_S}{\tau}\right).
+p_S(\tau) = \mathrm{softmax}\!\left(\frac{\mathbf{z}_S}{\tau}\right),
 \label{eq:kd_softmax_temp}
 \end{equation}
-Higher $\tau$ produces a softer distribution, revealing more information about the teacher's relative preferences among classes. The student is trained by minimising a weighted combination of the standard supervised loss and the distillation loss:
+and the student minimises
 \begin{equation}
 \mathcal{L} = (1-\lambda)\,\mathcal{L}_{\text{sup}}(y, p_S(1))
 + \lambda\,\tau^2\,\mathrm{KL}\!\big(p_T(\tau)\,\|\,p_S(\tau)\big),
 \label{eq:kd_loss}
 \end{equation}
-where $\lambda \in [0,1]$ balances the two objectives, and $\mathrm{KL}(\cdot\|\cdot)$ is the Kullback--Leibler divergence. The $\tau^2$ term is commonly used to maintain comparable gradient magnitudes across different temperature choices \cite{Hinton2015Distilling}.
+where $\lambda$ balances the two terms and the factor $\tau^2$ keeps the gradient magnitudes comparable across temperatures \cite{Hinton2015Distilling}. Detectors such as YOLO use an independent sigmoid per class instead of a softmax, and the distillation term then becomes a binary cross-entropy between the teacher's and the student's per-class probabilities. Distillation can also act on intermediate features, attention maps or relations between samples.
 
-\subsubsection*{Distillation beyond logits}
-While logit distillation is widely used for classification, distillation can also transfer information from intermediate representations. Common extensions include:
-\begin{itemize}
-    \item \textbf{Feature distillation}: the student is encouraged to match the teacher's feature maps at selected layers.
-    \item \textbf{Attention distillation}: the student matches attention maps or activation patterns, which can guide where the model should focus.
-    \item \textbf{Relation distillation}: the student learns relationships between samples or regions that are captured by the teacher.
-\end{itemize}
-These variants can be particularly helpful when the student architecture differs significantly from the teacher \cite{Hinton2015Distilling}.
+Distillation for detection must transfer both classification and localisation. Early methods mostly imitated deep features in selected regions. Localisation distillation showed that mimicking the teacher's outputs can outperform feature imitation and that localisation knowledge is more important than semantic knowledge for dense detectors \cite{Zheng2022LD}. Response-based distillation on the detection head, applied to class scores and boxes, is also simple to implement because it needs no extra modules that would remain in the deployed model.
 
-\subsubsection*{Knowledge distillation for object detection}
-Object detection is more complex than classification because the model must solve multiple sub-tasks, typically including classification and localisation of bounding boxes. As a result, distillation for detection often combines multiple signals, such as:
-\begin{itemize}
-    \item distillation of classification scores,
-    \item distillation of bounding box regression outputs,
-    \item distillation of intermediate features (e.g., backbone or neck feature maps),
-    \item distillation of region-level predictions (for two-stage detectors) or dense prediction maps (for one-stage detectors).
-\end{itemize}
-Because the output structure is richer, detection distillation methods must be designed carefully to avoid transferring teacher errors or overly constraining the student \cite{Ren2015FasterRCNN}.
+The choice of teacher matters. A larger and more accurate teacher is often not a better one: when the capacity gap between teacher and student is large, the student cannot mimic the teacher \cite{Cho2019Efficacy}, and intermediate-sized teacher assistants have been proposed to bridge the gap \cite{Mirzadeh2020TA}. Distillation also works without a capacity gap. Born-again networks, students with the same architecture as their teacher, outperformed their teachers \cite{Furlanello2018BAN}. One interpretation is that distillation then acts as a regulariser, which would matter most when training data are scarce. D-FINE's localisation self-distillation is a related idea applied inside a single network \cite{Peng2024DFINE}.
 
-\subsubsection*{Why distillation is useful for compression}
-Distillation is especially useful in compression pipelines because it can reduce the accuracy gap between a compact model and a large baseline without increasing inference cost \cite{Cheng2017SurveyCompression}. This makes it complementary to other efficiency methods:
-\begin{itemize}
-    \item A \textbf{pruned} model can be fine-tuned with distillation to recover performance lost by removing channels or filters.
-    \item A \textbf{quantised} model can be trained with distillation so that reduced precision causes smaller accuracy degradation.
-    \item A \textbf{lightweight student architecture} (manually designed or found by NAS) can be distilled from a stronger teacher to improve accuracy under strict latency or energy constraints.
-\end{itemize}
-In edge deployment scenarios, where model capacity is limited, distillation is often one of the most effective ways to maintain accuracy while meeting runtime budgets \cite{Sze2017EfficientProcessing}.
+Distillation adds no cost at inference and combines naturally with the other methods: it can recover accuracy lost by pruning, and it can be used during quantisation-aware training \cite{Cheng2017SurveyCompression}. Its costs are a teacher, extra training time and additional hyperparameters.
 
-\subsubsection*{Limitations and practical considerations}
-Although distillation can significantly improve compact models, it also introduces additional training complexity \cite{Hinton2015Distilling}. A strong teacher is required, and the choice of distillation targets, temperature $\tau$, and weighting $\lambda$ can influence results. Moreover, the student may inherit some of the teacher's biases or failure modes. For these reasons, distillation is typically evaluated in conjunction with other compression techniques under consistent deployment conditions \cite{Cheng2017SurveyCompression}.
+\subsection{Hardware-aware design}
+\label{sec:rw_nas}
 
-
-\subsection{Neural Architecture Search and Hardware-aware design}
-Neural Architecture Search (NAS) is a family of methods that automate the design of neural network architectures \cite{Cai2019ProxylessNAS}. Instead of manually choosing the number of layers, channel widths, kernel sizes, or attention configurations, NAS explores a predefined \emph{search space} of candidate architectures and aims to identify models that achieve strong performance. This approach is particularly relevant in the context of efficient deployment, because the architecture itself strongly influences inference latency, memory usage, and energy consumption \cite{Sze2017EfficientProcessing}.
-
-\subsubsection*{Problem formulation}
-NAS can be expressed as an optimisation problem over architectures $\alpha$ from a search space $\mathcal{A}$. The goal is often to maximise predictive performance while satisfying efficiency constraints:
+Neural architecture search (NAS) automates the design of networks by searching a space $\mathcal{A}$ of candidate architectures, often under a cost constraint \cite{Cai2019ProxylessNAS}:
 \begin{equation}
 \max_{\alpha \in \mathcal{A}} \; \mathrm{Acc}(\alpha)
 \quad \text{subject to} \quad
 \mathrm{Cost}(\alpha) \le C_{\max},
 \label{eq:nas_constraint}
 \end{equation}
-where $\mathrm{Cost}(\alpha)$ can represent latency, parameter count, memory usage, energy consumption, or a combination of these metrics. In many edge scenarios, the constraint is expressed directly as a latency budget measured on a target device \cite{Cai2019ProxylessNAS}.
+where the cost can be latency, memory or energy. Hardware-aware methods measure or predict the cost on the target device, because operation counts do not predict latency reliably \cite{Cai2019ProxylessNAS}. Full NAS is expensive, so practical work restricts the search space, searches only parts of a network, or starts from published efficient families \cite{Tan2020EfficientDet}. RF-DETR applies weight-sharing NAS to detection transformers \cite{Robinson2025RFDETR}. Releasing a detector in several scales, as YOLO11 and YOLO26 do, can be seen as a manual version of the same idea: the user picks the scale that fits the budget. NAS is not carried out in this thesis.
 
-Alternatively, the objective may be written as a multi-objective trade-off, for example maximising accuracy while penalising cost:
-\[
-\max_{\alpha \in \mathcal{A}} \; \mathrm{Acc}(\alpha) - \beta\,\mathrm{Cost}(\alpha),
-\]
-where $\beta$ controls how strongly efficiency is prioritised.
+\section{Inference on general-purpose processors}
+\label{sec:rw_cpu}
 
-\subsubsection*{Search strategies}
-NAS approaches differ mainly in the strategy used to explore the search space. Common strategies include:
-\begin{itemize}
-    \item \textbf{Evolutionary search}, where architectures are mutated and selected over generations.
-    \item \textbf{Reinforcement learning}, where a controller proposes architectures and receives rewards based on performance.
-    \item \textbf{Gradient-based NAS}, where a continuous relaxation of the search space allows optimisation by gradient descent.
-\end{itemize}
-In addition to the search strategy, NAS also depends on how candidate architectures are evaluated, which is often the dominant computational cost \cite{Cai2019ProxylessNAS}.
+Many edge computers have no GPU and run neural networks on their central processor. Processors execute the arithmetic of a network with single-instruction multiple-data (SIMD) vector instructions, such as AVX2 with 256-bit registers or AVX-512 with 512-bit registers on x86 processors. Two further extensions matter for reduced precision. Vector Neural Network Instructions (VNNI) multiply 8-bit integers and accumulate the products into 32-bit sums in a single instruction, which accelerates INT8 convolutions and matrix products. Advanced Matrix Extensions (AMX), introduced with the fourth generation of Intel Xeon Scalable processors, add two-dimensional tile registers and a matrix-multiplication unit for BF16 and INT8 \cite{Nassif2022SapphireRapids}. Server processors may support all of these extensions, whereas low-power and embedded processors often provide only AVX2, possibly with VNNI. Which reduced-precision format is fastest therefore depends on the processor. With AMX, BF16 runs at high throughput without calibration. Without AMX or native BF16 support, INT8 through VNNI is the reduced-precision format that the hardware accelerates.
 
-\subsubsection*{Hardware-aware design}
-In practice, theoretical measures such as FLOPs do not always predict real latency on a specific device. Hardware-aware methods, therefore, incorporate device-dependent measurements or predictors. A hardware-aware formulation replaces $\mathrm{Cost}(\alpha)$ with a metric measured on a target platform (or estimated by a surrogate model):
-\[
-\mathrm{Cost}(\alpha) = \mathrm{Lat}_{\text{device}}(\alpha) \quad \text{or} \quad \widehat{\mathrm{Lat}}_{\text{device}}(\alpha).
-\]
-This is important because practical runtime is influenced by factors such as memory bandwidth, kernel implementations, operator fusion, and the inference engine \cite{Sze2017EfficientProcessing}. For edge deployment, hardware-aware NAS can therefore produce architectures that are efficient \emph{in practice}, not only on paper.
+Inference runtimes translate a trained network into code for the target processor. OpenVINO converts a model into an intermediate representation, applies graph optimisations such as operator fusion, and selects kernel implementations for the instruction set that is available when the model is compiled \cite{OpenVINO}. A precision hint lets the runtime execute an FP32 model in BF16 on processors that support it. An INT8 model produced by quantisation contains quantise and dequantise operations, and layers without an integer kernel run in floating point.
 
-\subsubsection*{Computational requirements and practical limitations}
-A major drawback of NAS is its computational cost. Evaluating many candidate architectures can require significant resources, often involving repeated training or fine-tuning. Early NAS approaches were prohibitively expensive, sometimes requiring hundreds or thousands of GPU-days. Although modern methods have improved efficiency (e.g., weight sharing, early stopping, or proxy tasks), NAS can still be difficult to perform under limited computational budgets \cite{Cai2019ProxylessNAS}.
+Operation counts are an indirect measure of speed. Latency also depends on memory access, on how well the layer shapes fit the vector and tile units, on data-layout conversions and on parallelism. Ma et al.\ therefore argued for evaluating the direct metric, speed on the target platform, rather than FLOPs alone \cite{Ma2018ShuffleNetV2, Sze2017EfficientProcessing}. Small models in particular can be limited by memory traffic and fixed overheads rather than arithmetic, and the end-to-end time of a detector also includes image resizing and, for most one-stage detectors, NMS. For these reasons, all latencies in this thesis are measured end to end on the processor itself.
 
-For this reason, when compute resources are constrained, NAS is often used in a reduced or practical form, for example:
-\begin{itemize}
-    \item restricting the search space to a small set of design choices,
-    \item using pre-trained backbones and searching only parts of the network (e.g., detection head or neck),
-    \item relying on published efficient architectures as baselines rather than performing a full search \cite{Tan2020EfficientDet}.
-    \item using lightweight proxy metrics or latency predictors instead of measuring every candidate on hardware.
-\end{itemize}
-These strategies allow some benefits of architecture optimisation without the full computational cost of large-scale NAS \cite{Cai2019ProxylessNAS}.
+\section{Object detection in viticulture}
+\label{sec:rw_viticulture}
 
-\subsubsection*{Relation to model compression}
-NAS and compression address efficiency in complementary ways. Compression methods such as pruning and quantisation start from an existing architecture and aim to reduce its cost after training \cite{Cheng2017SurveyCompression}. NAS, in contrast, aims to discover architectures that are efficient \emph{by design} \cite{Cai2019ProxylessNAS}. In practice, both approaches can be combined: an architecture designed or selected for efficiency may still benefit from pruning, quantisation, or distillation to further meet strict edge constraints. From an edge deployment perspective, this combination is often attractive because it balances model quality with practical runtime performance \cite{Sze2017EfficientProcessing}.
+Deep learning is widely used in agriculture, from crop and weed classification to fruit detection and yield estimation \cite{Kamilaris2018DLAgriculture}. Grape bunches are a difficult detection target. Their shape, size, colour and compactness vary between varieties and growth stages, they are partly hidden by leaves and by each other, and outdoor lighting changes strongly \cite{Santos2020WGISD}.
 
-\section*{Summary}
-This chapter introduced the core building blocks used throughout the thesis: neural networks and their training, convolutional networks for vision workloads, and transformer-based models, including vision transformers, as modern alternatives for sequence-style processing in vision \cite{LeCun2015DeepLearning, Vaswani2017Attention, Dosovitskiy2020ViT}.
+The Embrapa Wine Grape Instance Segmentation Dataset (WGISD) is a standard benchmark for bunch detection \cite{Santos2020WGISD}. It contains 300 photographs of five grape varieties, taken at close range, with bounding boxes for all bunches and instance masks for a subset of them. Its authors evaluated Mask R-CNN, YOLOv2 and YOLOv3 and combined detection with three-dimensional association to track bunches across images; at IoU 0.5, Mask R-CNN reached an F1 score of 0.84. GrapeMOTS provides drone video recorded along vineyard rows from several perspectives, with multi-object tracking and segmentation annotations of grape bunches \cite{ArizaSentis2024GrapeMOTS}. W{\l}odarczyk et al.\ catalogued public precision-viticulture datasets and assessed their readiness for scene reconstruction \cite{Wlodarczyk2026GrapesReady}. As Chapter~3 shows, only a few of these datasets carry bunch-level labels suitable for detection.
 
-It then motivated \emph{frugal artificial intelligence} as a practical viewpoint where accuracy must be balanced against latency, memory, energy, and data/communication constraints typical of edge deployment \cite{Sze2017EfficientProcessing}. To meet these constraints, the chapter reviewed four main families of efficiency methods: quantisation (lower numerical precision), pruning (removing parameters/structures), knowledge distillation (teacher--student transfer), and hardware-aware NAS (architectures optimised under device-specific cost metrics). Finally, it highlighted that real deployment performance depends on the full hardware--software stack (e.g., operator support, memory bandwidth, runtime kernels), so evaluation should reflect realistic conditions rather than relying only on proxy metrics.
+Recent work on WGISD proposes lightweight YOLO variants. GrapeUL-YOLO adds bidirectional cross-scale fusion and elliptical anchors to a YOLO detector \cite{Zhu2026GrapeULYOLO}. On the official test split it reports 91.2 mAP50 and 57.6 mAP50-95 with 5.11 million parameters, ahead of the YOLOv5, YOLOv8 and YOLO11 baselines trained in the same study. Like most such studies, it reports single training runs without uncertainty estimates and measures speed on a desktop GPU. On a test set of 58 images, differences of one or two points can arise from training randomness and test-set sampling alone. The effect of compression and deployment settings on processor latency is rarely studied for this application.
+
+\section{Summary and research gap}
+\label{sec:rw_summary}
+
+This chapter introduced the building blocks of modern vision models, the YOLO11 and YOLO26 detector families and the detection transformers that offer an alternative design, together with the main methods for making detectors cheaper: quantisation, structured pruning, knowledge distillation and hardware-aware design. It also explained why the fastest number format and the actual benefit of a smaller network depend on the processor and its instruction set.
+
+Three gaps in the reviewed work motivate this thesis. First, compressed models are usually compared with the model they were derived from, rarely with a smaller dense model of the same family, although the value of pruning over training a smaller architecture has been questioned \cite{Liu2019RethinkingPruning, Blalock2020StatePruning}. Second, savings are often reported as operation counts or as GPU latency, while latency on processors, which depends on the number format and the instruction set, is seldom measured together with accuracy. Third, detection studies on small agricultural datasets report single runs without uncertainty and do not examine deployment on processors. The following chapters address these gaps with a common protocol: the same processor, the same accuracy evaluation with confidence intervals, and a fixed decision rule for when compression counts as better than choosing a smaller model.
 
 
 \chapter{Experimental methodology}
